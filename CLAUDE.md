@@ -77,13 +77,14 @@ Obs     : OpenTelemetry → Grafana
 
 | Concern | Choice | Notes |
 |---|---|---|
-| ASR (English) | `faster-whisper` large-v3 int8 | local |
-| ASR (Hindi/Hinglish) | AI4Bharat `IndicConformer` | fallback to Whisper IndicSUPERB fine-tune |
-| VAD / barge-in | `silero-vad` via Pipecat-ai | |
-| TTS / voice clone | `Coqui XTTS-v2` (Apache 2.0) | reference sample at `packages/voice/samples/reference.wav` |
-| Dialog LLM (local) | `llama3.1:8b` via Ollama | |
-| Dialog LLM (hosted) | `llama-3.1-70b-versatile` via Groq | swapped via `LLM_PROVIDER=groq` |
-| Embeddings | `nomic-embed-text` via Ollama | |
+| ASR (primary) | Groq Whisper API `whisper-large-v3` | handles English + Hindi/Hinglish; cloud |
+| ASR (local fallback) | `faster-whisper` large-v3 int8 | only viable on NVIDIA GPU hardware |
+| VAD / barge-in | `silero-vad` via Pipecat-ai | runs CPU-only, lightweight |
+| TTS / voice clone | `Coqui XTTS-v2` via HF Space endpoint | free GPU inference; ref sample at `packages/voice/samples/reference.wav` |
+| TTS fallback / benchmark | ElevenLabs free tier | MOS quality comparison |
+| Dialog LLM (primary) | `llama-3.1-70b-versatile` via Groq | `LLM_PROVIDER=groq` (default) |
+| Dialog LLM (optional) | `llama3.1:8b` via Ollama | power-user mode; requires NVIDIA GPU |
+| Embeddings | Jina AI embeddings or `text-embedding-004` via Gemini | cloud; no local GPU needed |
 | Orchestration | LangGraph + LangSmith tracing | |
 | Realtime pipeline | Pipecat-ai | handles VAD + ASR + LLM + TTS + barge-in |
 | PII detection | Microsoft Presidio + LLM-as-judge | custom recognizers for PAN, Aadhaar, Luhn cards |
@@ -104,11 +105,25 @@ Obs     : OpenTelemetry → Grafana
 ## 4. LLM Configuration
 
 ```
-LLM_PROVIDER=ollama          # ollama | groq
-OLLAMA_MODEL=llama3.1:8b
-OLLAMA_EMBED_MODEL=nomic-embed-text
+LLM_PROVIDER=groq            # groq (default) | ollama (requires NVIDIA GPU)
 GROQ_MODEL=llama-3.1-70b-versatile
 GROQ_API_KEY=<secret>
+GROQ_WHISPER_MODEL=whisper-large-v3
+
+# Optional — only needed when LLM_PROVIDER=ollama on GPU hardware
+OLLAMA_MODEL=llama3.1:8b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+
+# Embeddings (cloud)
+EMBED_PROVIDER=jina           # jina | gemini
+JINA_API_KEY=<secret>
+GEMINI_API_KEY=<secret>
+GEMINI_EMBED_MODEL=text-embedding-004
+
+# TTS
+TTS_PROVIDER=hf_space         # hf_space | elevenlabs
+HF_SPACE_XTTS_URL=<secret>    # your XTTS-v2 HF Space endpoint
+ELEVENLABS_API_KEY=<secret>
 ```
 
 All LLM calls must go through a thin `packages/llm_client/` wrapper that reads `LLM_PROVIDER` and routes accordingly. No hard-coded model names outside that wrapper and `CLAUDE.md`.
@@ -203,19 +218,17 @@ saarthi/
 
 ---
 
-## 8. Hardware (TODO — fill in before Phase 1)
-
-> **ACTION REQUIRED:** Run `systeminfo` and `nvidia-smi` (or GPU-Z) and update this section before starting Phase 1. Claude Code uses this to decide local-vs-hosted model recommendations.
+## 8. Hardware
 
 | Field | Value |
 |---|---|
-| OS | Windows (version TBD) |
-| RAM | TBD |
-| CPU | TBD |
-| GPU | TBD |
-| VRAM | TBD |
+| OS | Windows 11 Pro |
+| RAM | 16 GB |
+| CPU | Intel Core i5-8365U (8th gen, 4C/8T, 15W TDP) |
+| GPU | Intel UHD Graphics 620 (integrated — no CUDA, no local ML inference) |
+| VRAM | N/A |
 
-Reference targets from project plan: 16 GB RAM + RTX 3060 (8 GB VRAM) fits Whisper-large-v3 int8 + Llama-3.1-8B Q4 concurrently with model-swapping.
+**Verdict: cloud-first.** This machine cannot run Whisper-large-v3, XTTS-v2, or Llama-3.1-8B locally at acceptable latency. All inference routes to free-tier cloud APIs (Groq, HF Spaces, Jina/Gemini). See `docs/adr/0001-cloud-first-inference.md`.
 
 ---
 
