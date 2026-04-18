@@ -82,7 +82,7 @@ Obs     : OpenTelemetry → Grafana
 | VAD / barge-in | `silero-vad` via Pipecat-ai | runs CPU-only, lightweight |
 | TTS / voice clone | `Coqui XTTS-v2` via HF Space endpoint | free GPU inference; ref sample at `packages/voice/samples/reference.wav` |
 | TTS fallback / benchmark | ElevenLabs free tier | MOS quality comparison |
-| Dialog LLM (primary) | `llama-3.1-70b-versatile` via Groq | `LLM_PROVIDER=groq` (default) |
+| Dialog LLM (primary) | `llama-3.3-70b-versatile` via Groq | `LLM_PROVIDER=groq` (default) |
 | Dialog LLM (optional) | `llama3.1:8b` via Ollama | power-user mode; requires NVIDIA GPU |
 | Embeddings | Jina AI embeddings or `text-embedding-004` via Gemini | cloud; no local GPU needed |
 | Orchestration | LangGraph + LangSmith tracing | |
@@ -106,7 +106,7 @@ Obs     : OpenTelemetry → Grafana
 
 ```
 LLM_PROVIDER=groq            # groq (default) | ollama (requires NVIDIA GPU)
-GROQ_MODEL=llama-3.1-70b-versatile
+GROQ_MODEL=llama-3.3-70b-versatile
 GROQ_API_KEY=<secret>
 GROQ_WHISPER_MODEL=whisper-large-v3
 

@@ -13,7 +13,7 @@ The development machine is an Intel Core i5-8365U laptop with 16 GB RAM and an I
 | Model | Min VRAM | Verdict |
 |---|---|---|
 | Whisper-large-v3 int8 | ~4 GB GPU / 6 GB RAM | Too slow on CPU; ~30–60s per utterance |
-| Llama-3.1-8B Q4 | ~5 GB GPU | CPU inference ~10–20 tok/s; violates 300 ms budget |
+| Llama-3.3-8B Q4 | ~5 GB GPU | CPU inference ~10–20 tok/s; violates 300 ms budget |
 | XTTS-v2 | ~3–4 GB GPU | CPU synthesis ~4–8× real-time; unacceptable |
 
 Running even one of these models locally would blow the latency budget and exhaust RAM. Running all three concurrently is not feasible.
@@ -27,7 +27,7 @@ All ML inference is routed to free-tier cloud APIs:
 | Concern | Provider | Free Tier Limit |
 |---|---|---|
 | ASR (English + Hindi) | Groq Whisper API (`whisper-large-v3`) | 28,800 audio-sec / day (~8 hr) |
-| Dialog LLM | Groq (`llama-3.1-70b-versatile`) | 14,400 req / day; 6,000 tokens/min |
+| Dialog LLM | Groq (`llama-3.3-70b-versatile`) | 14,400 req / day; 6,000 tokens/min |
 | TTS / voice clone | Coqui XTTS-v2 via Hugging Face Space endpoint | Shared GPU; ~1–3 s TTFB |
 | TTS benchmark | ElevenLabs free tier | 10,000 chars / month |
 | Embeddings | Jina AI embeddings (primary) or Gemini `text-embedding-004` (fallback) | Jina: 1M tokens free; Gemini: 1M tokens/min on free tier |
