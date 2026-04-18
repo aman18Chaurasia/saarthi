@@ -69,13 +69,15 @@ class ASRProcessor(FrameProcessor):
                 asr_ms = (time.perf_counter_ns() - t0) / 1_000_000
 
                 if text:
+                    transcription = TranscriptionFrame(
+                        text=text,
+                        user_id=self._user_id,
+                        timestamp=str(int(t0 // 1_000_000)),
+                        finalized=True,
+                    )
+                    transcription.metadata["duration_ms"] = asr_ms
                     await self.push_frame(
-                        TranscriptionFrame(
-                            text=text,
-                            user_id=self._user_id,
-                            timestamp=str(int(t0 // 1_000_000)),
-                            finalized=True,
-                        ),
+                        transcription,
                         direction,
                     )
                 await self.push_frame(

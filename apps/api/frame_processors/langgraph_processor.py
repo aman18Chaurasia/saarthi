@@ -62,8 +62,11 @@ class LangGraphProcessor(FrameProcessor):
 
         agent_text = _extract_agent_text(result)
         if agent_text:
+            text_frame = TextFrame(text=agent_text)
+            text_frame.metadata["node_name"] = result.get("current_node", "unknown")
+            text_frame.metadata["turn_index"] = result.get("turn_index", 0)
             await self.push_frame(frame, direction)
-            await self.push_frame(TextFrame(text=agent_text), direction)
+            await self.push_frame(text_frame, direction)
             await self.push_frame(LatencyFrame(hop="llm", duration_ms=llm_ms), direction)
         else:
             # Forward original transcription so downstream processors aren't stuck

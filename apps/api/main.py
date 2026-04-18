@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 
+from websocket_call import router as websocket_router
+
 app = FastAPI(
     title="SAARTHI API",
     version="0.1.0",
     description="Self-Adaptive AI for Responsible Tele-conversational Human Interaction in BFSI",
 )
+app.include_router(websocket_router)
 
 
 @app.get("/health")
