@@ -7,6 +7,7 @@ members = [
     "packages/eligibility",
     "packages/persona_gym",
     "packages/scripts",
+    "packages/dialog",
 ]
 
 # ── Shared tool config (inherited by all workspace members) ──────────────────
