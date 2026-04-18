@@ -1,5 +1,11 @@
 # Claude Code Starter Prompts for SAARTHI
 
+> **Note:** This document was written pre-pivot. The authoritative stack
+> is defined in CLAUDE.md and ADRs 0001/0002. Specifically, local LLM
+> inference (Ollama, Llama-3.1-8B) was replaced by cloud inference (Groq
+> llama-3.3-70b-versatile) per ADR 0001. Treat this document as historical
+> planning context, not current guidance.
+
 Copy–paste these into your Claude Code sessions in order. Each one is scoped so Claude doesn't overreach and you stay in control.
 
 ---

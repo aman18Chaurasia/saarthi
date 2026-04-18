@@ -1,4 +1,11 @@
 # SAARTHI
+
+> **Note:** This document was written pre-pivot. The authoritative stack
+> is defined in CLAUDE.md and ADRs 0001/0002. Specifically, local LLM
+> inference (Ollama, Llama-3.1-8B) was replaced by cloud inference (Groq
+> llama-3.3-70b-versatile) per ADR 0001. Treat this document as historical
+> planning context, not current guidance.
+
 **Self-Adaptive AI for Responsible Tele-conversational Human Interaction in BFSI**
 
 A production-style, multi-agent, self-improving outbound voice agent for Indian lending products — built as a final-year major project that aims for publishable novelty, not just a passing rubric score.
