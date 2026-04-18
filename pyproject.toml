@@ -27,10 +27,17 @@ ignore_missing_imports = true
 explicit_package_bases = true
 
 [tool.uv]
-dev-dependencies = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-httpx>=0.36.2",
+]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra --strict-markers --import-mode=importlib"
 asyncio_mode = "auto"
 testpaths = ["apps", "packages"]
+markers = [
+    "integration: hits real external APIs — skipped in default CI (requires API keys)",
+]
