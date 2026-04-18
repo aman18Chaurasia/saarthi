@@ -8,7 +8,7 @@ from .base import BaseChatProvider
 class GroqProvider(BaseChatProvider):
     def __init__(self) -> None:
         self._client = AsyncGroq(api_key=os.environ["GROQ_API_KEY"])
-        self._model = os.environ.get("GROQ_MODEL", "llama-3.1-70b-versatile")
+        self._model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         resp = await self._client.chat.completions.create(

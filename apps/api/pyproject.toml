@@ -25,6 +25,7 @@ dependencies = [
     "saarthi-guardrail",
     "saarthi-eligibility",
     "saarthi-scripts",
+    "asyncpg>=0.31.0",
 ]
 
 [project.optional-dependencies]
