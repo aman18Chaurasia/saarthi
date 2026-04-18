@@ -1,0 +1,65 @@
+# SAARTHI
+
+**Self-Adaptive AI for Responsible Tele-conversational Human Interaction in BFSI**
+
+SAARTHI is a production-style, multi-agent, self-improving outbound voice agent for Indian lending products. It qualifies leads across 10 BFSI products via a streaming voice pipeline (ASR → LangGraph multi-agent dialog → TTS), with a real-time compliance guardrail, Hinglish code-switching, and an RLAIF self-improvement loop driven by a Synthetic Persona Gym.
+
+For the full project spec, architecture, and phased plan see [CLAUDE.md](CLAUDE.md).
+
+---
+
+## Prerequisites
+
+| Tool | Version | Install |
+|---|---|---|
+| Docker Desktop | 4.x+ | https://docs.docker.com/get-docker/ |
+| Node.js | 20+ | https://nodejs.org |
+| pnpm | 9+ | `npm i -g pnpm` |
+| uv | latest | https://docs.astral.sh/uv/getting-started/installation/ |
+| API keys | — | see `.env.example` |
+
+Required API keys (all free tier):
+- **Groq** — LLM inference + Whisper ASR
+- **ElevenLabs** — TTS (or set `TTS_PROVIDER=hf_space` for XTTS-v2 via HF Space)
+- **Jina AI** — embeddings
+
+---
+
+## Quickstart
+
+```bash
+git clone <repo-url>
+cd saarthi
+
+# 1. Copy env template and fill in your API keys
+cp .env.example .env
+
+# 2. Install all dependencies and download the spaCy model Presidio needs
+make setup
+
+# 3. Start backing services (Postgres, Redis, Qdrant, Neo4j, MinIO)
+make up
+
+# 4. Start the API (http://localhost:8000)
+make api
+
+# 5. In a second terminal — start the dashboard (http://localhost:3000)
+make web
+```
+
+> **Run `make setup` before anything else.** It downloads the `en_core_web_lg` spaCy
+> model that Presidio requires; skipping it causes a runtime crash.
+
+---
+
+## Available make targets
+
+| Target | What it does |
+|---|---|
+| `make setup` | `uv sync` + spaCy model download + `pnpm install` |
+| `make up` | Start all Docker services |
+| `make down` | Stop all Docker services |
+| `make api` | Run FastAPI dev server on `:8000` |
+| `make web` | Run Next.js dev server on `:3000` |
+| `make test` | `pytest -q` + `vitest` |
+| `make lint` | ruff + mypy + biome |

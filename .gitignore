@@ -1,0 +1,51 @@
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.uv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Node ──────────────────────────────────────────────────
+node_modules/
+.next/
+.pnpm-store/
+.turbo/
+
+# ── IDEs ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# ── Environment ───────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Audio artifacts ───────────────────────────────────────
+recordings/*.wav
+recordings/*.mp3
+recordings/*.ogg
+packages/voice/samples/*.wav
+packages/voice/samples/*.mp3
+!packages/voice/samples/.gitkeep
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Claude internals ──────────────────────────────────────
+.claude/

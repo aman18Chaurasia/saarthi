@@ -1,0 +1,35 @@
+[tool.uv.workspace]
+members = [
+    "apps/api",
+    "packages/llm_client",
+    "packages/voice",
+    "packages/guardrail",
+    "packages/eligibility",
+    "packages/persona_gym",
+    "packages/scripts",
+]
+
+# ── Shared tool config (inherited by all workspace members) ──────────────────
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+explicit_package_bases = true
+
+[tool.uv]
+dev-dependencies = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --strict-markers --import-mode=importlib"
+asyncio_mode = "auto"
+testpaths = ["apps", "packages"]

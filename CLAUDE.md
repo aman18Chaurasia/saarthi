@@ -137,6 +137,7 @@ All LLM calls must go through a thin `packages/llm_client/` wrapper that reads `
 - **Version:** Python 3.11, managed via `uv`.
 - **Linting / types:** `ruff` + `mypy --strict`. CI fails on any error.
 - **Testing:** `pytest` with `pytest-asyncio`. Every module needs a test.
+- **spaCy model:** `en_core_web_lg` is declared as a direct wheel dep in `apps/api/pyproject.toml` — `uv sync` installs it automatically. Do **not** run `python -m spacy download en_core_web_lg`.
 - **Data models:** `Pydantic v2` for request/response; `SQLModel` for ORM; `Alembic` for migrations.
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, etc.).
 - **Secrets:** `.env` only — never committed. Use `python-dotenv` locally.
