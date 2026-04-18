@@ -26,6 +26,7 @@ dependencies = [
     "saarthi-eligibility",
     "saarthi-scripts",
     "asyncpg>=0.31.0",
+    "setuptools<81",
 ]
 
 [project.optional-dependencies]
