@@ -1,0 +1,9 @@
+age: 41
+expected_outcome: qualified
+has_time: true
+income_level: high
+loan_purpose: education
+monthly_income_inr: 30000
+persona_id: personal_loan_0019
+personality_type: rushed
+product: personal_loan

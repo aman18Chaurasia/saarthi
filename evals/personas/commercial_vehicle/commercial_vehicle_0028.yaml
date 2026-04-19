@@ -1,0 +1,9 @@
+age: 38
+expected_outcome: qualified
+has_time: true
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: commercial_vehicle_0028
+personality_type: cooperative
+product: commercial_vehicle

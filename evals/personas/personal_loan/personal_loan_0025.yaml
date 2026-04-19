@@ -1,0 +1,9 @@
+age: 52
+expected_outcome: qualified
+has_time: false
+income_level: high
+loan_purpose: home_renovation
+monthly_income_inr: 30000
+persona_id: personal_loan_0025
+personality_type: objection_prone
+product: personal_loan

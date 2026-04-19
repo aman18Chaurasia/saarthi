@@ -1,0 +1,9 @@
+age: 35
+expected_outcome: not_qualified
+has_time: false
+income_level: medium
+loan_purpose: MBA
+monthly_income_inr: 15000
+persona_id: education_loan_0017
+personality_type: detail_oriented
+product: education_loan

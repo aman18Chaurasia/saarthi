@@ -1,0 +1,9 @@
+age: 25
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: four_wheeler_0009
+personality_type: cooperative
+product: four_wheeler

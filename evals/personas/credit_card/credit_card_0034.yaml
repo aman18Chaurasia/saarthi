@@ -1,0 +1,9 @@
+age: 53
+expected_outcome: qualified
+has_time: false
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: credit_card_0034
+personality_type: detail_oriented
+product: credit_card

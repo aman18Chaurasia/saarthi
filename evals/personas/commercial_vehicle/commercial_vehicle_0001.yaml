@@ -1,0 +1,9 @@
+age: 33
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: commercial_vehicle_0001
+personality_type: detail_oriented
+product: commercial_vehicle

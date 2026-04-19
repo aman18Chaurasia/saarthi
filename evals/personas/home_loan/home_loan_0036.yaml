@@ -1,0 +1,9 @@
+age: 42
+expected_outcome: qualified
+has_time: false
+income_level: very_high
+loan_purpose: second_home
+monthly_income_inr: 75000
+persona_id: home_loan_0036
+personality_type: rushed
+product: home_loan

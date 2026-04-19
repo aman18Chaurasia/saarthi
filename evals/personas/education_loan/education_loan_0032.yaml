@@ -1,0 +1,9 @@
+age: 43
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: engineering
+monthly_income_inr: 8000
+persona_id: education_loan_0032
+personality_type: detail_oriented
+product: education_loan

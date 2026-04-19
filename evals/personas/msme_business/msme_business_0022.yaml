@@ -1,0 +1,9 @@
+age: 28
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: msme_business_0022
+personality_type: cooperative
+product: msme_business

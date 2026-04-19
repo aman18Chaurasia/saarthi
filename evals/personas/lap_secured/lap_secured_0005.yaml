@@ -1,0 +1,9 @@
+age: 47
+expected_outcome: qualified
+has_time: true
+income_level: high
+loan_purpose: general
+monthly_income_inr: 30000
+persona_id: lap_secured_0005
+personality_type: objection_prone
+product: lap_secured

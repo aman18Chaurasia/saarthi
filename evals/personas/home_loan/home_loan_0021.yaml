@@ -1,0 +1,9 @@
+age: 54
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: first_home
+monthly_income_inr: 8000
+persona_id: home_loan_0021
+personality_type: detail_oriented
+product: home_loan

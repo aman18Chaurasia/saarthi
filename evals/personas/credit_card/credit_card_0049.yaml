@@ -1,0 +1,9 @@
+age: 30
+expected_outcome: qualified
+has_time: true
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: credit_card_0049
+personality_type: objection_prone
+product: credit_card

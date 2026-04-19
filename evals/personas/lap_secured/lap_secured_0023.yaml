@@ -1,0 +1,9 @@
+age: 53
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: lap_secured_0023
+personality_type: detail_oriented
+product: lap_secured

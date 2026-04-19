@@ -1,0 +1,9 @@
+age: 34
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: credit_card_0011
+personality_type: objection_prone
+product: credit_card

@@ -1,0 +1,9 @@
+age: 29
+expected_outcome: qualified
+has_time: true
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: unsecured_loan_0008
+personality_type: rushed
+product: unsecured_loan

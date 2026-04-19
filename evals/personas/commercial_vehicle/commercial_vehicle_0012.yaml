@@ -1,0 +1,9 @@
+age: 43
+expected_outcome: qualified
+has_time: false
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: commercial_vehicle_0012
+personality_type: objection_prone
+product: commercial_vehicle

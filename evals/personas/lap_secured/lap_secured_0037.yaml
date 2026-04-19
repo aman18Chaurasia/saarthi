@@ -1,0 +1,9 @@
+age: 48
+expected_outcome: qualified
+has_time: true
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: lap_secured_0037
+personality_type: hesitant
+product: lap_secured

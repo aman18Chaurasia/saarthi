@@ -1,0 +1,9 @@
+age: 46
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: msme_business_0008
+personality_type: rushed
+product: msme_business

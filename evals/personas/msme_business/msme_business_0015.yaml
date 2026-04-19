@@ -1,0 +1,9 @@
+age: 36
+expected_outcome: qualified
+has_time: true
+income_level: medium
+loan_purpose: general
+monthly_income_inr: 15000
+persona_id: msme_business_0015
+personality_type: detail_oriented
+product: msme_business

@@ -1,0 +1,9 @@
+age: 43
+expected_outcome: qualified
+has_time: false
+income_level: very_high
+loan_purpose: medicine
+monthly_income_inr: 75000
+persona_id: education_loan_0041
+personality_type: rushed
+product: education_loan

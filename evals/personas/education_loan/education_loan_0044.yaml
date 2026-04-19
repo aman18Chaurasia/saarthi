@@ -1,0 +1,9 @@
+age: 28
+expected_outcome: not_qualified
+has_time: false
+income_level: low
+loan_purpose: study_abroad
+monthly_income_inr: 8000
+persona_id: education_loan_0044
+personality_type: hesitant
+product: education_loan

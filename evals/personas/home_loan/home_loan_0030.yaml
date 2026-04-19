@@ -1,0 +1,9 @@
+age: 27
+expected_outcome: qualified
+has_time: true
+income_level: very_high
+loan_purpose: first_home
+monthly_income_inr: 75000
+persona_id: home_loan_0030
+personality_type: detail_oriented
+product: home_loan

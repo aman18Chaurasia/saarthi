@@ -1,0 +1,9 @@
+age: 47
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: debt_consolidation
+monthly_income_inr: 8000
+persona_id: personal_loan_0014
+personality_type: rushed
+product: personal_loan

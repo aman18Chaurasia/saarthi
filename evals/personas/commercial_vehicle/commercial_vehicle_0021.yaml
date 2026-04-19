@@ -1,0 +1,9 @@
+age: 52
+expected_outcome: qualified
+has_time: false
+income_level: high
+loan_purpose: general
+monthly_income_inr: 30000
+persona_id: commercial_vehicle_0021
+personality_type: rushed
+product: commercial_vehicle

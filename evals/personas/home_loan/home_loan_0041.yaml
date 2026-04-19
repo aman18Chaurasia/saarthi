@@ -1,0 +1,9 @@
+age: 26
+expected_outcome: qualified
+has_time: false
+income_level: high
+loan_purpose: property_investment
+monthly_income_inr: 30000
+persona_id: home_loan_0041
+personality_type: rushed
+product: home_loan

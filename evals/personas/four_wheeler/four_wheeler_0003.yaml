@@ -1,0 +1,9 @@
+age: 28
+expected_outcome: qualified
+has_time: true
+income_level: high
+loan_purpose: general
+monthly_income_inr: 30000
+persona_id: four_wheeler_0003
+personality_type: hesitant
+product: four_wheeler

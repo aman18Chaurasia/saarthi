@@ -1,0 +1,9 @@
+age: 55
+expected_outcome: not_qualified
+has_time: true
+income_level: medium
+loan_purpose: study_abroad
+monthly_income_inr: 15000
+persona_id: education_loan_0023
+personality_type: rushed
+product: education_loan

@@ -1,0 +1,9 @@
+age: 32
+expected_outcome: qualified
+has_time: true
+income_level: very_high
+loan_purpose: travel
+monthly_income_inr: 75000
+persona_id: personal_loan_0021
+personality_type: detail_oriented
+product: personal_loan

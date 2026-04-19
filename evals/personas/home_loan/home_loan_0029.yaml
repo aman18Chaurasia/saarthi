@@ -1,0 +1,9 @@
+age: 26
+expected_outcome: not_qualified
+has_time: false
+income_level: low
+loan_purpose: second_home
+monthly_income_inr: 8000
+persona_id: home_loan_0029
+personality_type: objection_prone
+product: home_loan

@@ -1,0 +1,9 @@
+age: 54
+expected_outcome: qualified
+has_time: true
+income_level: high
+loan_purpose: study_abroad
+monthly_income_inr: 30000
+persona_id: education_loan_0000
+personality_type: detail_oriented
+product: education_loan

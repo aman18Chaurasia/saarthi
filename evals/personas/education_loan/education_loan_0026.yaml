@@ -1,0 +1,9 @@
+age: 42
+expected_outcome: not_qualified
+has_time: false
+income_level: medium
+loan_purpose: medicine
+monthly_income_inr: 15000
+persona_id: education_loan_0026
+personality_type: cooperative
+product: education_loan

@@ -1,0 +1,9 @@
+age: 33
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: education
+monthly_income_inr: 8000
+persona_id: personal_loan_0010
+personality_type: hesitant
+product: personal_loan

@@ -1,0 +1,9 @@
+age: 30
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: credit_card_0015
+personality_type: cooperative
+product: credit_card

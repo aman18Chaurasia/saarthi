@@ -1,0 +1,9 @@
+age: 30
+expected_outcome: not_qualified
+has_time: true
+income_level: low
+loan_purpose: travel
+monthly_income_inr: 8000
+persona_id: personal_loan_0038
+personality_type: objection_prone
+product: personal_loan

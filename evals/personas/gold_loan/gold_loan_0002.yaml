@@ -1,0 +1,9 @@
+age: 29
+expected_outcome: qualified
+has_time: false
+income_level: very_high
+loan_purpose: general
+monthly_income_inr: 75000
+persona_id: gold_loan_0002
+personality_type: detail_oriented
+product: gold_loan

@@ -1,0 +1,9 @@
+age: 29
+expected_outcome: qualified
+has_time: true
+income_level: high
+loan_purpose: medicine
+monthly_income_inr: 30000
+persona_id: education_loan_0008
+personality_type: objection_prone
+product: education_loan

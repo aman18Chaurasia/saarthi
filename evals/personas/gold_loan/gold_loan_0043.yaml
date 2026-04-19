@@ -1,0 +1,9 @@
+age: 32
+expected_outcome: not_qualified
+has_time: false
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: gold_loan_0043
+personality_type: objection_prone
+product: gold_loan

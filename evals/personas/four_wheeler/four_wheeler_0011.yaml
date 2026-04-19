@@ -1,0 +1,9 @@
+age: 33
+expected_outcome: qualified
+has_time: true
+income_level: very_high
+loan_purpose: general
+monthly_income_inr: 75000
+persona_id: four_wheeler_0011
+personality_type: cooperative
+product: four_wheeler

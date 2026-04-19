@@ -1,0 +1,9 @@
+age: 37
+expected_outcome: qualified
+has_time: true
+income_level: very_high
+loan_purpose: general
+monthly_income_inr: 75000
+persona_id: credit_card_0038
+personality_type: objection_prone
+product: credit_card

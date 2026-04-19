@@ -1,0 +1,9 @@
+age: 25
+expected_outcome: not_qualified
+has_time: false
+income_level: low
+loan_purpose: general
+monthly_income_inr: 8000
+persona_id: unsecured_loan_0047
+personality_type: objection_prone
+product: unsecured_loan

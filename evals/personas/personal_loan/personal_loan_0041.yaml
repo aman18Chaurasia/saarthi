@@ -1,0 +1,9 @@
+age: 31
+expected_outcome: qualified
+has_time: true
+income_level: medium
+loan_purpose: education
+monthly_income_inr: 15000
+persona_id: personal_loan_0041
+personality_type: objection_prone
+product: personal_loan

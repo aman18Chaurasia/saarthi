@@ -1,0 +1,9 @@
+age: 41
+expected_outcome: not_qualified
+has_time: true
+income_level: medium
+loan_purpose: property_investment
+monthly_income_inr: 15000
+persona_id: home_loan_0016
+personality_type: objection_prone
+product: home_loan
