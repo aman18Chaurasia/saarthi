@@ -49,3 +49,4 @@ ehthumbs.db
 
 # ── Claude internals ──────────────────────────────────────
 .claude/
+apps/web/next-env.d.ts
