@@ -2,6 +2,13 @@
 
 **Self-Adaptive AI for Responsible Tele-conversational Human Interaction in BFSI**
 
+[![Tests](https://github.com/aman18Chaurasia/saarthi/actions/workflows/test.yml/badge.svg)](https://github.com/aman18Chaurasia/saarthi/actions/workflows/test.yml)
+[![Lint](https://github.com/aman18Chaurasia/saarthi/actions/workflows/lint.yml/badge.svg)](https://github.com/aman18Chaurasia/saarthi/actions/workflows/lint.yml)
+![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![Tests](https://img.shields.io/badge/tests-186%2F188%20passing-brightgreen)
+
 SAARTHI is a production-style, multi-agent, self-improving outbound voice agent for Indian lending products. It qualifies leads across 10 BFSI products via a streaming voice pipeline (ASR → LangGraph multi-agent dialog → TTS), with a real-time compliance guardrail, Hinglish code-switching, and an RLAIF self-improvement loop driven by a Synthetic Persona Gym.
 
 For the full project spec, architecture, and phased plan see [CLAUDE.md](CLAUDE.md).
