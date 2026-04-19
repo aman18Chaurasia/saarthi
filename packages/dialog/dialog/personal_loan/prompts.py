@@ -70,9 +70,10 @@ _NODE_SCRIPTS: dict[str, str] = {
 _SLOT_GUIDANCE: dict[str, str] = {
     "opener": "No slots to extract. classified_intent should be 'unclear'.",
     "identity_confirm": (
-        "Extract: name_confirmed (bool — did customer confirm identity?), "
-        "has_time (bool — do they have 2 minutes?). "
-        "Intent: affirm if both true, deny if no time, unclear otherwise."
+        "Extract: name_confirmed (bool — ONLY if customer explicitly confirmed their identity), "
+        "has_time (bool — ONLY include if customer EXPLICITLY affirmed they have time OR explicitly said they're busy). "
+        "CRITICAL: If customer's response is ambiguous or doesn't directly answer 'do you have 2 minutes', OMIT has_time entirely (don't set false by default). "
+        "Intent: affirm if both confirmed, deny if explicitly no time, unclear otherwise."
     ),
     "qualify": (
         "Extract: monthly_income_inr (integer rupees, e.g. 50000). "
