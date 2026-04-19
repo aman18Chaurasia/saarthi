@@ -1,0 +1,85 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: saarthi
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: saarthi
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv sync
+
+      - name: Run linting
+        run: |
+          uv run ruff check packages/ apps/
+
+      - name: Run type checking
+        run: |
+          uv run mypy packages/ apps/ || true
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://saarthi:password@localhost:5432/saarthi
+          REDIS_URL: redis://localhost:6379
+          # Mock API keys for CI (tests will skip integration tests)
+          GROQ_API_KEY: mock-key-for-ci
+          JINA_API_KEY: mock-key-for-ci
+        run: |
+          uv run pytest -v --tb=short --maxfail=5
+
+      - name: Generate coverage report
+        if: success()
+        run: |
+          uv run pytest --cov=packages --cov=apps --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov (optional)
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+        continue-on-error: true
