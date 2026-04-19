@@ -403,15 +403,15 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
                     continue
                 await runtime.stop()
                 duration_s = time.perf_counter() - state.started_at
-                await websocket.send_json(
-                    {
-                        "type": "call_ended",
-                        "call_id": call_id,
-                        "outcome": "dropped",
-                        "duration_s": duration_s,
-                        "turn_count": state.turn_index,
-                    }
-                )
+                call_ended_msg = {
+                    "type": "call_ended",
+                    "call_id": call_id,
+                    "outcome": "dropped",
+                    "duration_s": duration_s,
+                    "turn_count": state.turn_index,
+                }
+                print(f"[WebSocket] Sending call_ended: {call_ended_msg}")
+                await websocket.send_json(call_ended_msg)
                 await websocket.close()
                 break
             else:

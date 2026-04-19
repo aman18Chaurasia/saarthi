@@ -129,6 +129,7 @@ export function useVoiceCall(config: VoiceCallConfig) {
             break;
 
           case "call_ended":
+            console.log("[useVoiceCall] call_ended received:", msg);
             setStatus("ended");
             setMetrics((prev) => ({
               ...prev,
