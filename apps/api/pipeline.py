@@ -118,9 +118,15 @@ def build_pipeline(
 
     # TTS
     if tts_provider is None:
-        from voice.elevenlabs_provider import ElevenLabsProvider
+        tts_provider_name = os.environ.get("TTS_PROVIDER", "elevenlabs")
+        if tts_provider_name == "mock":
+            from voice.mock_tts_provider import MockTTSProvider
 
-        tts_provider = ElevenLabsProvider()
+            tts_provider = MockTTSProvider()
+        else:
+            from voice.elevenlabs_provider import ElevenLabsProvider
+
+            tts_provider = ElevenLabsProvider()
 
     # Processor chain
     vad = VADProcessor(vad_impl=vad_impl)
