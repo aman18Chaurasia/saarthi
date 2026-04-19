@@ -1,0 +1,37 @@
+# Commercial Vehicle Loan call script
+# Agent turns must average ≤25 words. Pause markers: <pause:wait_user/>
+product: commercial_vehicle
+version: "0.1"
+
+nodes:
+  opener:
+    agent: |
+      Namaste! Main {agent_name} bol raha hoon, {lender_name} se.
+      Kya aap {customer_name} ji bol rahe hain? <pause:wait_user/>
+
+  identity_confirm:
+    agent: |
+      Thank you. Main aapko ek commercial vehicle loan offer ke baare mein baat karna chahta tha —
+      kya abhi aapke paas 2 minute hain? <pause:wait_user/>
+
+  qualify:
+    agent: |
+      Great. Aapki monthly income approximately kitni hai? <pause:wait_user/>
+    follow_up:
+      agent: |
+        Aur aap kis type ki vehicle lena chahte hain — truck, tempo, ya kuch aur?
+        Vehicle ka estimated price kya hai? <pause:wait_user/>
+
+  consent:
+    agent: |
+      Main aapko ek tailored offer bhejne ke liye aapki basic details record karna chahta hoon.
+      Kya aap consent dete hain? <pause:wait_user/>
+
+  next_step:
+    agent: |
+      Perfect. Aapko 24 ghante mein ek detailed offer SMS aur email par milega.
+      Koi bhi sawaal ho toh hum available hain. <pause:wait_user/>
+
+  close:
+    agent: |
+      Bahut bahut shukriya aapka samay dene ke liye. Have a great day! <pause:end/>

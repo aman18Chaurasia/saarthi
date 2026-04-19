@@ -22,9 +22,8 @@ from typing import Any
 from groq import AsyncGroq
 from pipecat.pipeline.pipeline import Pipeline
 
-from dialog.personal_loan.graph import build_graph
-from dialog.personal_loan.schema import StructuredAgentResponse
-from dialog.personal_loan.state import DialogState
+# Phase 2: Dynamic imports per product (see build_pipeline)
+from dialog.personal_loan.state import DialogState  # type hint only
 from frame_processors.asr_processor import ASRProcessor
 from frame_processors.langgraph_processor import LangGraphProcessor
 from frame_processors.tts_processor import TTSProcessor
@@ -97,6 +96,13 @@ def build_pipeline(
     if transcribe_fn is None:
         api_key = os.environ["GROQ_API_KEY"]
         transcribe_fn = make_groq_transcribe_fn(api_key)
+
+    # Phase 2: Dynamically load dialog module for product
+    product = initial_state.product
+    dialog_module = __import__(f"dialog.{product}.graph", fromlist=["build_graph"])
+    schema_module = __import__(f"dialog.{product}.schema", fromlist=["StructuredAgentResponse"])
+    build_graph = dialog_module.build_graph
+    StructuredAgentResponse = schema_module.StructuredAgentResponse
 
     # Dialog LLM (Groq JSON mode)
     if llm_fn is None:

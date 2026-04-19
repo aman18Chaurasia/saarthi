@@ -346,8 +346,14 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
             raise ValueError("First message must be start_call")
         if started_payload.call_id != call_id:
             raise ValueError("Path call_id and payload call_id do not match")
-        if started_payload.product != "personal_loan":
-            raise ValueError("Only product=personal_loan is supported in Phase 1")
+
+        # Phase 2: Support all 10 products
+        valid_products = [
+            "personal_loan", "home_loan", "education_loan", "gold_loan", "credit_card",
+            "unsecured_loan", "lap_secured", "commercial_vehicle", "four_wheeler", "msme_business"
+        ]
+        if started_payload.product not in valid_products:
+            raise ValueError(f"Invalid product: {started_payload.product}. Must be one of: {', '.join(valid_products)}")
 
         runtime = _runtime_factory(websocket)(_initial_state_from_start(started_payload))
         await runtime.start()
