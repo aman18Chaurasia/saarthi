@@ -45,12 +45,18 @@ async def check_compliance(
     results = analyzer.analyze(
         text=text,
         language="en",
-        entities=["PHONE_NUMBER", "EMAIL_ADDRESS", "CREDIT_CARD", "AADHAAR"]
+        entities=["PHONE_NUMBER", "EMAIL_ADDRESS", "CREDIT_CARD"]
     )
 
     pii_types = [r.entity_type for r in results]
 
-    # Simple rules (LLM judge optional for Phase 3)
+    # Simple pattern matching as fallback
+    import re
+    cc_pattern = r'\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b'
+    if re.search(cc_pattern, text):
+        pii_types.append("CREDIT_CARD")
+
+    # Simple rules
     violations = []
     if "CREDIT_CARD" in pii_types:
         violations.append("Credit card number detected")
