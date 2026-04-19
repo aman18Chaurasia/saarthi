@@ -92,12 +92,26 @@ _SLOT_GUIDANCE: dict[str, str] = {
         "CRITICAL: If you see ANY number in the response, extract it as monthly_income_inr. Be aggressive - any number = income."
     ),
     "qualify_followup": (
-        "Extract: loan_purpose (string — home_renovation, travel, medical, education, "
-        "business, other). Intent: provide_value if purpose stated, unclear otherwise."
+        "Extract: loan_purpose (string).\n\n"
+        "EXAMPLES:\n"
+        "Customer: 'Home renovation' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
+        "Customer: 'For my house repairs' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
+        "Customer: 'Travel' → {\"loan_purpose\": \"travel\"}, intent: provide_value\n"
+        "Customer: 'Medical emergency' → {\"loan_purpose\": \"medical\"}, intent: provide_value\n"
+        "Customer: 'Education' → {\"loan_purpose\": \"education\"}, intent: provide_value\n"
+        "Customer: 'Business' → {\"loan_purpose\": \"business\"}, intent: provide_value\n"
+        "Customer: 'Personal use' → {\"loan_purpose\": \"other\"}, intent: provide_value\n\n"
+        "VALID VALUES: home_renovation, travel, medical, education, business, other. Map customer words to closest match."
     ),
     "consent": (
-        "Extract: consent_given (bool). "
-        "Intent: affirm if yes, deny if no, unclear otherwise."
+        "Extract: consent_given (bool).\n\n"
+        "EXAMPLES:\n"
+        "Customer: 'Yes' → {\"consent_given\": true}, intent: affirm\n"
+        "Customer: 'Sure, go ahead' → {\"consent_given\": true}, intent: affirm\n"
+        "Customer: 'Okay' → {\"consent_given\": true}, intent: affirm\n"
+        "Customer: 'No' → {\"consent_given\": false}, intent: deny\n"
+        "Customer: 'I don't want to' → {\"consent_given\": false}, intent: deny\n\n"
+        "RULES: Any positive response = true. Any negative response = false."
     ),
     "next_step": "No slots to extract. Intent: affirm.",
     "close": "No slots to extract. Intent: unclear.",
