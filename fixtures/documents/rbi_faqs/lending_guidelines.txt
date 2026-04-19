@@ -1,0 +1,39 @@
+# RBI Guidelines on Fair Lending Practices
+
+## Consumer Rights
+Every borrower has the right to:
+- Receive a loan sanction letter with all terms clearly mentioned
+- Know the total cost of borrowing including processing fees and charges
+- Receive a copy of loan agreement before disbursement
+- Prepay the loan without penalty (as per RBI guidelines)
+- Receive a No Objection Certificate (NOC) upon loan closure
+
+## Interest Rate Disclosure
+Banks must disclose:
+- Annual Percentage Rate (APR) including all charges
+- Basis of interest calculation (reducing balance/flat rate)
+- Floating rate reset frequency and methodology
+- Conditions under which rates can be revised
+
+## Grievance Redressal
+If you have a complaint:
+1. Contact bank's customer care within 30 days
+2. If unresolved, escalate to bank's nodal officer
+3. If still unresolved, approach Banking Ombudsman
+4. Complaints can be filed online at RBI's CMS portal
+
+## Fair Practices Code
+Banks must:
+- Not discriminate based on caste, religion, or gender
+- Provide loan documents in vernacular language
+- Display interest rates and charges prominently
+- Follow RBI-mandated recovery practices
+- Not harass or use unfair recovery methods
+
+## Third-Party Collection Agencies
+- Banks hiring collection agents must ensure they follow RBI guidelines
+- Agents cannot visit borrower's residence between 7 PM and 7 AM
+- Harassment or threatening language is strictly prohibited
+- Borrowers can report violations to RBI
+
+For detailed guidelines, visit: www.rbi.org.in

@@ -1,0 +1,35 @@
+# Personal Loan - Product Brochure
+
+## Overview
+DemoBank Personal Loan offers quick and hassle-free financing for your personal needs. Whether it's a wedding, medical emergency, home renovation, or travel, we've got you covered.
+
+## Key Features
+- Loan Amount: ₹50,000 to ₹10,00,000
+- Tenure: 12 to 60 months
+- Interest Rate: 10.5% - 18% p.a. (based on credit profile)
+- Processing Fee: 2% of loan amount (min ₹1,000)
+- No prepayment charges after 6 months
+
+## Eligibility Criteria
+- Minimum Age: 21 years
+- Maximum Age: 60 years
+- Minimum Monthly Income: ₹15,000 for salaried individuals
+- Employment: Minimum 2 years work experience
+- Credit Score: 650+ preferred
+
+## Benefits
+- Instant approval in 24 hours
+- Minimal documentation required
+- Flexible repayment options
+- Doorstep service available
+- Special rates for existing customers
+
+## Required Documents
+- PAN Card
+- Aadhaar Card
+- Last 3 months salary slips
+- Last 6 months bank statements
+- Address proof (utility bill/rent agreement)
+
+## Contact
+For more information, call our customer care at 1800-XXX-XXXX or visit www.demobank.in

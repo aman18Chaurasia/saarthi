@@ -1,10 +1,11 @@
 [project]
-name = "saarthi-eligibility"
+name = "saarthi-rag"
 version = "0.1.0"
-description = "Product eligibility engine backed by Neo4j knowledge graph"
+description = "RAG pipeline for SAARTHI product brochures and RBI FAQs"
 requires-python = ">=3.11"
 dependencies = [
-    "neo4j>=5.20",
+    "qdrant-client>=1.9",
+    "pypdf>=4.0",
     "pydantic>=2.0",
     "python-dotenv>=1.0",
 ]
@@ -14,4 +15,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["eligibility"]
+packages = ["rag"]
