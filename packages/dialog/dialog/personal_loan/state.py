@@ -65,3 +65,6 @@ class DialogState(BaseModel):
     # Set externally by the pipeline before each node invocation.
     # Holds the most recent customer utterance (raw, not redacted).
     asr_text: str = ""
+
+    # Phase 3: Multi-agent mode
+    agent_mode: str = "qualifier"  # qualifier | objection_handler
