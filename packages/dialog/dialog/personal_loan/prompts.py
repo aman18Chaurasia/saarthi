@@ -83,10 +83,13 @@ _SLOT_GUIDANCE: dict[str, str] = {
         "Extract: monthly_income_inr (integer).\n\n"
         "EXAMPLES:\n"
         "Customer: 'Fifty thousand' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
-        "Customer: 'My income is 50000' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
-        "Customer: 'Around 45k per month' → {\"monthly_income_inr\": 45000}, intent: provide_value\n"
-        "Customer: 'I don't know' → {}, intent: unclear\n\n"
-        "RULES: Extract ANY number mentioned. Convert words to digits (fifty thousand = 50000, 45k = 45000)."
+        "Customer: '50,000 rupees' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
+        "Customer: 'Rs. 3000' → {\"monthly_income_inr\": 3000}, intent: provide_value\n"
+        "Customer: '45k per month' → {\"monthly_income_inr\": 45000}, intent: provide_value\n"
+        "Customer: 'Around thirty thousand' → {\"monthly_income_inr\": 30000}, intent: provide_value\n"
+        "Customer: 'I make 25 thousand' → {\"monthly_income_inr\": 25000}, intent: provide_value\n"
+        "Customer: 'Thank you' → {}, intent: unclear\n\n"
+        "CRITICAL: If you see ANY number in the response, extract it as monthly_income_inr. Be aggressive - any number = income."
     ),
     "qualify_followup": (
         "Extract: loan_purpose (string — home_renovation, travel, medical, education, "
