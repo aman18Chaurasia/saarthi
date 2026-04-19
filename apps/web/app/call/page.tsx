@@ -30,15 +30,11 @@ export default function CallPage() {
     if (voiceCall.status === "active" && !isInitialized) {
       setIsInitialized(true);
 
-      // Start mic capture
+      // Start mic capture (playback already started in handleStartCall)
       audioCaptureRef.current = new AudioCapture((pcm) => {
         voiceCall.sendAudio(pcm);
       });
       audioCaptureRef.current.start().catch(console.error);
-
-      // Start audio playback
-      audioPlaybackRef.current = new AudioPlayback();
-      audioPlaybackRef.current.start().catch(console.error);
     }
 
     if (voiceCall.status === "ended" && isInitialized) {
@@ -55,7 +51,11 @@ export default function CallPage() {
     };
   }, []);
 
-  const handleStartCall = () => {
+  const handleStartCall = async () => {
+    // Start audio playback BEFORE connecting (user interaction required for AudioContext)
+    audioPlaybackRef.current = new AudioPlayback();
+    await audioPlaybackRef.current.start();
+
     voiceCall.connect();
   };
 
