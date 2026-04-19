@@ -4,12 +4,12 @@ import { useVoiceCall } from "./useVoiceCall";
 
 // Mock WebSocket
 class MockWebSocket {
-  public readyState = WebSocket.CONNECTING;
+  public readyState: number = WebSocket.CONNECTING;
   public onopen: (() => void) | null = null;
   public onmessage: ((event: MessageEvent) => void) | null = null;
   public onerror: (() => void) | null = null;
   public onclose: (() => void) | null = null;
-  public binaryType = "arraybuffer";
+  public binaryType: BinaryType = "arraybuffer";
   public sentMessages: (string | ArrayBuffer)[] = [];
 
   constructor(public url: string) {

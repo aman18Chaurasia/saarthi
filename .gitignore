@@ -19,6 +19,7 @@ node_modules/
 .next/
 .pnpm-store/
 .turbo/
+*.tsbuildinfo
 
 # ── IDEs ──────────────────────────────────────────────────
 .vscode/

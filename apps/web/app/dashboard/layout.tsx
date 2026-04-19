@@ -1,28 +1,39 @@
+import { BarChart3, History, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const links = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/calls", label: "Calls", icon: History },
+  { href: "/dashboard/products", label: "Products", icon: BarChart3 },
+];
+
+export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex space-x-8">
-              <Link href="/dashboard" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium text-gray-900">
-                Overview
-              </Link>
-              <Link href="/dashboard/calls" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium text-gray-500 hover:text-gray-700">
-                Call History
-              </Link>
-              <Link href="/dashboard/products" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium text-gray-500 hover:text-gray-700">
-                Products
-              </Link>
-            </div>
+    <div className="min-h-screen bg-[#eef2ef] text-[#111816]">
+      <header className="border-b border-[#cbd6d0] bg-[#11231f] text-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#99c8b5]">
+              SAARTHI Command
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">BFSI Voice Analytics</h1>
           </div>
+          <nav className="flex flex-wrap gap-2">
+            {links.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-white/15 px-3 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white"
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {label}
+              </Link>
+            ))}
+          </nav>
         </div>
-      </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
-      </main>
+      </header>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

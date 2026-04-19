@@ -17,4 +17,4 @@ async def test_metrics_returns_text() -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         resp = await client.get("/metrics")
     assert resp.status_code == 200
-    assert "SAARTHI" in resp.text
+    assert "saarthi_latency_ms" in resp.text

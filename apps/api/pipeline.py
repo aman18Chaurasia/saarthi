@@ -14,6 +14,7 @@ fully unit-testable without network access.
 from __future__ import annotations
 
 import io
+import inspect
 import os
 import wave
 from collections.abc import Awaitable, Callable
@@ -65,6 +66,17 @@ def make_groq_transcribe_fn(
         return result.text  # type: ignore[attr-defined]
 
     return transcribe
+
+
+def _build_product_graph(
+    build_graph: Callable[..., Any],
+    llm_fn: Callable[..., Awaitable[Any]],
+    eligibility_fn: Callable[..., Awaitable[Any]] | None,
+) -> Any:
+    params = inspect.signature(build_graph).parameters
+    if "eligibility_fn" in params:
+        return build_graph(llm_fn, eligibility_fn=eligibility_fn)
+    return build_graph(llm_fn)
 
 
 def build_pipeline(
@@ -126,7 +138,7 @@ def build_pipeline(
         eligibility_fn = None
 
     # LangGraph dialog app
-    app = build_graph(llm_fn, eligibility_fn=eligibility_fn)
+    app = _build_product_graph(build_graph, llm_fn, eligibility_fn)
     graph_config: dict[str, Any] = {"configurable": {"thread_id": call_id}}
 
     # TTS

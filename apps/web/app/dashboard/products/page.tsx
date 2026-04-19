@@ -1,42 +1,69 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { type ProductAnalytics, fetchJson, productLabel } from "@/lib/api";
 
 export default function ProductsPage() {
-  const { data } = useQuery({
+  const { data = [], isLoading } = useQuery({
     queryKey: ["analytics", "by_product"],
-    queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/by_product`);
-      return res.json();
-    },
+    queryFn: () => fetchJson<ProductAnalytics[]>("/api/analytics/by_product"),
   });
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Products Analytics</h1>
+    <div className="space-y-6">
+      <section className="rounded-md border border-[#c9d6cf] bg-white p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Product Performance</h2>
+          <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#5d6b65]">
+            Calls by product
+          </span>
+        </div>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#d7e0db" />
+              <XAxis
+                dataKey="product"
+                stroke="#5d6b65"
+                tickFormatter={(value) => productLabel(String(value)).replace(" Loan", "")}
+              />
+              <YAxis stroke="#5d6b65" />
+              <Tooltip labelFormatter={(value) => productLabel(String(value))} />
+              <Bar dataKey="call_count" fill="#2d6a4f" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <section className="overflow-hidden rounded-md border border-[#c9d6cf] bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-[#d7e0db] text-sm">
+          <thead className="bg-[#f5f7f5] text-left text-xs uppercase tracking-[0.12em] text-[#5d6b65]">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Calls</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qualified Rate</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Duration</th>
+              <th className="px-4 py-3">Product</th>
+              <th className="px-4 py-3">Calls</th>
+              <th className="px-4 py-3">Qualified Rate</th>
+              <th className="px-4 py-3">Avg Duration</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data?.map((p: any) => (
-              <tr key={p.product}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.product}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.call_count}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.qualified_rate}%</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.avg_duration}s</td>
+          <tbody className="divide-y divide-[#edf1ee]">
+            {data.map((product) => (
+              <tr key={product.product} className="hover:bg-[#f8faf8]">
+                <td className="px-4 py-3 font-medium">{productLabel(product.product)}</td>
+                <td className="px-4 py-3 text-[#5d6b65]">{product.call_count}</td>
+                <td className="px-4 py-3 text-[#5d6b65]">{product.qualified_rate}%</td>
+                <td className="px-4 py-3 text-[#5d6b65]">{product.avg_duration}s</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+
+        {!isLoading && data.length === 0 && (
+          <p className="px-4 py-10 text-center text-sm text-[#5d6b65]">
+            No product analytics available.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
