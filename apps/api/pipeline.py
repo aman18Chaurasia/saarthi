@@ -118,8 +118,15 @@ def build_pipeline(
 
         llm_fn = _groq_llm_fn
 
+    # Phase 2: Eligibility function (optional, graceful fallback if Neo4j down)
+    try:
+        from eligibility.checker import check_eligibility
+        eligibility_fn = check_eligibility
+    except Exception:
+        eligibility_fn = None
+
     # LangGraph dialog app
-    app = build_graph(llm_fn)
+    app = build_graph(llm_fn, eligibility_fn=eligibility_fn)
     graph_config: dict[str, Any] = {"configurable": {"thread_id": call_id}}
 
     # TTS

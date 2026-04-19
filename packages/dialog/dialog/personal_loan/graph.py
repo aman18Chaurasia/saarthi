@@ -61,12 +61,18 @@ _INTERRUPT_AFTER = [
 ]
 
 
-def build_graph(llm_fn: LLMCallable) -> CompiledStateGraph:
+def build_graph(
+    llm_fn: LLMCallable,
+    eligibility_fn: Any | None = None,
+    rag_fn: Any | None = None,
+) -> CompiledStateGraph:
     """Build and compile the personal loan dialog graph.
 
     Args:
         llm_fn: Async callable ``(messages, node_name, asr_text) -> StructuredAgentResponse``.
                 Pass a mock in tests; pass a real Groq JSON-mode function in production.
+        eligibility_fn: Optional async callable for eligibility checking (Phase 2).
+        rag_fn: Optional async callable for RAG context retrieval (Phase 2).
 
     Returns:
         A compiled LangGraph StateGraph with MemorySaver checkpointing.
@@ -82,7 +88,7 @@ def build_graph(llm_fn: LLMCallable) -> CompiledStateGraph:
         return await qualify_node(state, llm_fn)
 
     async def _qualify_followup(state: DialogState) -> DialogState:
-        return await qualify_followup_node(state, llm_fn)
+        return await qualify_followup_node(state, llm_fn, eligibility_fn, rag_fn)
 
     async def _consent(state: DialogState) -> DialogState:
         return await consent_node(state, llm_fn)

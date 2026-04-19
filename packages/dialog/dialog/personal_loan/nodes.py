@@ -13,6 +13,7 @@ substitute a mock without touching any network.
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any, Callable, Awaitable
 
 from pydantic import ValidationError
@@ -26,6 +27,12 @@ LLMCallable = Callable[
     [list[dict[str, str]], str, str],   # (messages, node_name, asr_text)
     Awaitable[StructuredAgentResponse],
 ]
+
+# Phase 2: Type hints for injectable eligibility and RAG functions
+EligibilityCallable = Callable[[str, int | None, int | None], Awaitable[Any]]  # product, income, revenue -> EligibilityResult
+RAGCallable = Callable[[str, str | None, int], Awaitable[str]]  # query, product, top_k -> context string
+
+logger = logging.getLogger(__name__)
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
@@ -163,10 +170,39 @@ async def qualify_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
     })
 
 
-async def qualify_followup_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
+async def qualify_followup_node(
+    state: DialogState,
+    llm_fn: LLMCallable,
+    eligibility_fn: EligibilityCallable | None = None,
+    rag_fn: RAGCallable | None = None,
+) -> DialogState:
+    """Qualify followup node with optional eligibility checking and RAG context.
+
+    Phase 2 integration:
+    - After extracting slots, checks eligibility if eligibility_fn is provided
+    - If ineligible, sets outcome="not_qualified" to route to close node
+    - RAG context can be fetched and passed to LLM (future enhancement)
+    """
     resp = await _call_llm(llm_fn, state, "qualify_followup")
     new_slots = _update_slots(state.slots, resp.slots_extracted)
     useful = _was_useful(resp, new_slots, "qualify_followup")
+
+    # Phase 2: Check eligibility if function is provided and we have required data
+    if eligibility_fn and new_slots.monthly_income_inr is not None:
+        try:
+            elig_result = await eligibility_fn(
+                state.product,
+                new_slots.monthly_income_inr,
+                None  # monthly_revenue_inr (only for msme_business)
+            )
+
+            if not elig_result.eligible:
+                logger.info(f"Eligibility check failed for {state.product}: {elig_result.reasons}")
+                # Set outcome to not_qualified to trigger close
+                new_slots = new_slots.model_copy(update={"outcome": "not_qualified"})
+        except Exception as e:
+            logger.warning(f"Eligibility check error: {e}. Continuing without rejection.")
+
     history, ti = _append_turns(state, "qualify_followup", resp.agent_turn_text)
     return state.model_copy(update={
         "current_node": "qualify_followup",
