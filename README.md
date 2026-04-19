@@ -4,7 +4,8 @@
 
 [![Tests](https://github.com/aman18Chaurasia/saarthi/actions/workflows/test.yml/badge.svg)](https://github.com/aman18Chaurasia/saarthi/actions/workflows/test.yml)
 [![Lint](https://github.com/aman18Chaurasia/saarthi/actions/workflows/lint.yml/badge.svg)](https://github.com/aman18Chaurasia/saarthi/actions/workflows/lint.yml)
-![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
+[![Deploy](https://github.com/aman18Chaurasia/saarthi/actions/workflows/deploy-preview.yml/badge.svg)](https://github.com/aman18Chaurasia/saarthi/actions/workflows/deploy-preview.yml)
+[![codecov](https://codecov.io/gh/aman18Chaurasia/saarthi/branch/master/graph/badge.svg)](https://codecov.io/gh/aman18Chaurasia/saarthi)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Tests](https://img.shields.io/badge/tests-186%2F188%20passing-brightgreen)
