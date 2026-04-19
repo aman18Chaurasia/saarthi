@@ -4,6 +4,7 @@ from fastapi.responses import PlainTextResponse
 from dotenv import load_dotenv
 
 from websocket_call import router as websocket_router
+from routes.analytics import router as analytics_router
 
 # Load .env from repo root (2 levels up from apps/api)
 _env_path = Path(__file__).parent.parent.parent / ".env"
@@ -15,6 +16,7 @@ app = FastAPI(
     description="Self-Adaptive AI for Responsible Tele-conversational Human Interaction in BFSI",
 )
 app.include_router(websocket_router)
+app.include_router(analytics_router, prefix="/api")
 
 
 @app.get("/health")
