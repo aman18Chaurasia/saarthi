@@ -70,14 +70,23 @@ _NODE_SCRIPTS: dict[str, str] = {
 _SLOT_GUIDANCE: dict[str, str] = {
     "opener": "No slots to extract. classified_intent should be 'unclear'.",
     "identity_confirm": (
-        "Extract: name_confirmed (bool — true if customer confirmed identity/name), "
-        "has_time (bool — true if: (a) customer said 'yes' OR (b) customer expressed interest/asked about the loan OR (c) customer is engaging positively; "
-        "false ONLY if customer explicitly said they're busy/don't have time/need to go. OMIT only if response is completely unclear). "
-        "Intent: affirm if both confirmed and has_time true, deny if no time, unclear otherwise."
+        "Extract: name_confirmed (bool), has_time (bool).\n\n"
+        "EXAMPLES:\n"
+        "Customer: 'Yes, I have 2 minutes' → {\"name_confirmed\": true, \"has_time\": true}, intent: affirm\n"
+        "Customer: 'I'm looking for a loan' → {\"name_confirmed\": true, \"has_time\": true}, intent: affirm\n"
+        "Customer: 'Yes this is Rahul speaking' → {\"name_confirmed\": true, \"has_time\": true}, intent: affirm\n"
+        "Customer: 'I'm busy right now' → {\"has_time\": false}, intent: deny\n"
+        "Customer: 'What?' → {}, intent: unclear\n\n"
+        "RULES: has_time=true if customer engages positively OR expresses interest. has_time=false ONLY if explicitly busy."
     ),
     "qualify": (
-        "Extract: monthly_income_inr (integer rupees, e.g. 50000). "
-        "Intent: provide_value if income stated, unclear otherwise."
+        "Extract: monthly_income_inr (integer).\n\n"
+        "EXAMPLES:\n"
+        "Customer: 'Fifty thousand' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
+        "Customer: 'My income is 50000' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
+        "Customer: 'Around 45k per month' → {\"monthly_income_inr\": 45000}, intent: provide_value\n"
+        "Customer: 'I don't know' → {}, intent: unclear\n\n"
+        "RULES: Extract ANY number mentioned. Convert words to digits (fifty thousand = 50000, 45k = 45000)."
     ),
     "qualify_followup": (
         "Extract: loan_purpose (string — home_renovation, travel, medical, education, "
