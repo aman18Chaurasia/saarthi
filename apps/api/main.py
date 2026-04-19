@@ -24,5 +24,5 @@ async def health() -> dict[str, str]:
 
 @app.get("/metrics", response_class=PlainTextResponse)
 async def metrics() -> str:
-    # Prometheus-compatible metrics endpoint — populated in Phase 1
-    return "# SAARTHI metrics\n# p50/p95 per hop added in Phase 1\n"
+    from metrics import get_collector
+    return get_collector().prometheus_format()

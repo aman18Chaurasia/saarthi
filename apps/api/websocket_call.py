@@ -30,6 +30,7 @@ from pipecat.processors.frame_processor import FrameDirection
 from dialog.personal_loan.state import DialogState
 from frames import LatencyFrame
 from pipeline import build_pipeline
+from metrics import get_collector
 
 router = APIRouter()
 
@@ -274,6 +275,14 @@ async def _send_turn_end(websocket: WebSocket, call_id: str, state: WebSocketTur
         + state.latency["llm_ms"]
         + state.latency["tts_first_byte_ms"]
     )
+
+    # Record metrics for Prometheus /metrics endpoint
+    collector = get_collector()
+    collector.record("asr", state.latency["asr_ms"])
+    collector.record("llm", state.latency["llm_ms"])
+    collector.record("tts", state.latency["tts_first_byte_ms"])
+    collector.record("e2e", e2e_ms)
+
     await websocket.send_json(
         {
             "type": "turn_end",
