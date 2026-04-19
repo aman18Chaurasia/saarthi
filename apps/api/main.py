@@ -1,7 +1,13 @@
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
+from dotenv import load_dotenv
 
 from websocket_call import router as websocket_router
+
+# Load .env from repo root (2 levels up from apps/api)
+_env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(_env_path)
 
 app = FastAPI(
     title="SAARTHI API",
