@@ -119,7 +119,6 @@ Great news! Based on our conversation, you've been pre-qualified for a {product}
 
 **Questions?**
 - Email: support@{lender.lower().replace(' ', '')}.com
-- Phone: 1800-XXX-XXXX (Toll-free, 9 AM - 9 PM)
 - Track Status: https://loans.{lender.lower().replace(' ', '')}.com/track
 
 We're excited to help you achieve your financial goals!
@@ -149,7 +148,7 @@ Our lending decisions consider multiple factors including income stability, cred
 - Explore our other product offerings that may better fit your profile
 
 **Need More Information?**
-Contact our customer care team at support@{lender.lower().replace(' ', '')}.com or call 1800-XXX-XXXX.
+Contact our customer care team at support@{lender.lower().replace(' ', '')}.com
 
 Reference ID: {call.call_id}
 
@@ -179,7 +178,7 @@ Thank you for speaking with us about {product}.
 Visit https://loans.{lender.lower().replace(' ', '')}.com/resume?ref={call.call_id}
 
 **Questions or Concerns?**
-Reply to this email or call us at 1800-XXX-XXXX (9 AM - 9 PM, 7 days a week)
+Reply to this email anytime — our team will respond within 24 hours
 
 We look forward to serving your financial needs.
 
