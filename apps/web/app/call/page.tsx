@@ -3,11 +3,10 @@
 import { AudioCapture } from "@/lib/audio-capture";
 import { AudioPlayback } from "@/lib/audio-playback";
 import { useVoiceCall } from "@/lib/useVoiceCall";
-import { ArrowLeft, Globe, Phone, PhoneOff } from "lucide-react";
+import { ArrowLeft, Globe, Phone, PhoneOff, Mic, MicOff, Volume2, Send } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Transcript } from "./transcript";
 
 const PRODUCTS = {
 	home_loan: "Home Loan",
@@ -36,32 +35,9 @@ const LANGUAGES = [
 ];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const E164_PHONE_RE = /^\+[1-9]\d{7,14}$/;
-
-type RealCallStatus = "idle" | "dialing" | "success" | "error";
-
-function normalizePhoneNumber(value: string) {
-	const trimmed = value.trim().replace(/[\s().-]+/g, "");
-	return trimmed.startsWith("00") ? `+${trimmed.slice(2)}` : trimmed;
-}
-
-function extractApiError(payload: unknown, fallback: string) {
-	if (payload && typeof payload === "object" && "detail" in payload) {
-		const detail = (payload as { detail?: unknown }).detail;
-		if (typeof detail === "string") {
-			return detail;
-		}
-		if (Array.isArray(detail)) {
-			return detail.map((item) => JSON.stringify(item)).join("; ");
-		}
-	}
-	return fallback;
-}
 
 function formatLatencyMs(value: number | undefined) {
-	if (typeof value !== "number" || value <= 0) {
-		return "N/A";
-	}
+	if (typeof value !== "number" || value <= 0) return "N/A";
 	return `${value.toFixed(0)}ms`;
 }
 
@@ -74,11 +50,10 @@ export default function CallPage() {
 
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [selectedLanguage, setSelectedLanguage] = useState("hi-IN");
-	const [customerPhone, setCustomerPhone] = useState("");
-	const [realCallStatus, setRealCallStatus] = useState<RealCallStatus>("idle");
-	const [realCallMessage, setRealCallMessage] = useState("");
+	const [contactInput, setContactInput] = useState("");
 	const audioCaptureRef = useRef<AudioCapture | null>(null);
 	const audioPlaybackRef = useRef<AudioPlayback | null>(null);
+	const transcriptEndRef = useRef<HTMLDivElement>(null);
 
 	const callId = useMemo(() => `call_${Date.now()}`, []);
 
@@ -96,458 +71,378 @@ export default function CallPage() {
 		},
 	});
 
+	// Auto-scroll transcript
+	useEffect(() => {
+		transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [voiceCall.transcript]);
+
 	useEffect(() => {
 		if (voiceCall.status === "active" && !isInitialized) {
+			const capture = new AudioCapture({
+				sampleRate: 16000,
+				onChunk: voiceCall.sendAudio
+			});
+			const playback = new AudioPlayback({
+				sampleRate: 16000
+			});
+
+			audioCaptureRef.current = capture;
+			audioPlaybackRef.current = playback;
 			setIsInitialized(true);
 
-			// Start mic capture
-			audioCaptureRef.current = new AudioCapture((pcm) => {
-				voiceCall.sendAudio(pcm);
-			});
-			audioCaptureRef.current.start().catch(console.error);
+			capture
+				.start()
+				.catch((err) => console.error("AudioCapture start error:", err));
 		}
 
-		if (voiceCall.status === "ended" && isInitialized) {
+		if (voiceCall.status === "ended") {
 			audioCaptureRef.current?.stop();
+			audioCaptureRef.current = null;
 			audioPlaybackRef.current?.stop();
-			setIsInitialized(false);
+			audioPlaybackRef.current = null;
 		}
 	}, [voiceCall.status, voiceCall.sendAudio, isInitialized]);
 
-	useEffect(() => {
-		return () => {
-			audioCaptureRef.current?.stop();
-			audioPlaybackRef.current?.stop();
-		};
-	}, []);
-
-	const handleStartCall = async () => {
-		// Start audio playback
-		audioPlaybackRef.current = new AudioPlayback();
-		await audioPlaybackRef.current.start();
-
+	const handleStartCall = () => {
 		voiceCall.connect();
 	};
 
 	const handleEndCall = () => {
-		audioCaptureRef.current?.stop();
-		audioPlaybackRef.current?.stop();
 		voiceCall.endCall();
-		setIsInitialized(false);
 	};
 
-	const handleRealCall = async () => {
-		const normalizedPhone = normalizePhoneNumber(customerPhone);
-
-		if (!normalizedPhone) {
-			setRealCallStatus("error");
-			setRealCallMessage("Please enter a phone number.");
-			return;
-		}
-
-		if (!E164_PHONE_RE.test(normalizedPhone)) {
-			setRealCallStatus("error");
-			setRealCallMessage(
-				"Use E.164 format, for example +919876543210. Do not include spaces or a leading local 0.",
-			);
-			return;
-		}
-
-		setRealCallStatus("dialing");
-		setRealCallMessage("Requesting Twilio outbound call...");
-
-		try {
-			const response = await fetch(`${API_BASE_URL}/call/outbound`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					customer_phone: normalizedPhone,
-					product,
-					language: selectedLanguage,
-					agent_name: "Priya",
-					lender_name: "Demo Bank",
-					customer_name: "Rahul",
-				}),
-			});
-
-			const text = await response.text();
-			let payload: unknown = {};
-			try {
-				payload = text ? JSON.parse(text) : {};
-			} catch {
-				payload = { detail: text };
-			}
-
-			if (!response.ok) {
-				throw new Error(
-					extractApiError(
-						payload,
-						`API ${response.status}: ${response.statusText}`,
-					),
-				);
-			}
-
-			const data = payload as {
-				call_sid?: string;
-				call_id?: string;
-				to?: string;
-			};
-			setCustomerPhone(normalizedPhone);
-			setRealCallStatus("success");
-			setRealCallMessage(
-				`Call initiated to ${data.to ?? normalizedPhone}. SID: ${data.call_sid ?? "pending"}`,
-			);
-		} catch (error) {
-			console.error("Error initiating call:", error);
-			setRealCallStatus("error");
-			setRealCallMessage(
-				error instanceof Error ? error.message : "Failed to initiate call.",
-			);
+	const handleSendContact = () => {
+		if (contactInput.trim()) {
+			voiceCall.sendText(contactInput.trim());
+			setContactInput("");
 		}
 	};
+
+	// Check if agent is asking for contact
+	const lastAgentMsg = [...voiceCall.transcript]
+		.reverse()
+		.find(t => t.type === "agent_text");
+	const agentText = lastAgentMsg?.text?.toLowerCase() || "";
+	const isAskingContact = voiceCall.status === "active" && (
+		agentText.includes("email") ||
+		agentText.includes("phone") ||
+		agentText.includes("whatsapp") ||
+		agentText.includes("sms") ||
+		agentText.includes("number") ||
+		agentText.includes("type kariye")
+	);
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-			<main className="container mx-auto p-6 max-w-5xl">
-				<div className="flex flex-col gap-6">
-					{/* Header */}
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-4">
-							<Link
-								href="/"
-								className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+		<div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 relative overflow-hidden">
+			{/* Animated Background */}
+			<div className="absolute inset-0 overflow-hidden pointer-events-none">
+				<div className="absolute top-1/4 -left-64 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+				<div className="absolute bottom-1/4 -right-64 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+			</div>
+
+			<main className="relative container mx-auto p-6 max-w-6xl">
+				{/* Header */}
+				<div className="flex items-center justify-between mb-8">
+					<div className="flex items-center gap-4">
+						<Link
+							href="/"
+							className="p-3 hover:bg-white/10 rounded-xl transition-all border border-white/10"
+						>
+							<ArrowLeft className="w-5 h-5 text-white" />
+						</Link>
+						<div>
+							<h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+								{PRODUCTS[product]}
+							</h1>
+							<p className="text-sm text-slate-400 mt-1">
+								AI Voice Assistant Demo
+							</p>
+						</div>
+					</div>
+
+					{/* Language Selector */}
+					{voiceCall.status === "idle" && (
+						<div className="flex items-center gap-3">
+							<Globe className="w-5 h-5 text-slate-400" />
+							<select
+								value={selectedLanguage}
+								onChange={(e) => setSelectedLanguage(e.target.value)}
+								className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-medium hover:bg-white/10 focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
 							>
-								<ArrowLeft className="w-5 h-5" />
-							</Link>
-							<div>
-								<h1 className="text-3xl font-bold text-slate-900">
-									{PRODUCTS[product]}
-								</h1>
-								<p className="text-sm text-slate-600 mt-1">
-									AI Voice Assistant Demo
+								{LANGUAGES.map((lang) => (
+									<option key={lang.code} value={lang.code} className="bg-slate-900">
+										{lang.emoji} {lang.name}
+									</option>
+								))}
+							</select>
+						</div>
+					)}
+				</div>
+
+				{/* Main Content */}
+				<div className="grid lg:grid-cols-3 gap-6">
+					{/* Left Column - Call Controls & Info */}
+					<div className="lg:col-span-1 space-y-6">
+						{/* Call Control Card */}
+						<div className="p-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl">
+							{voiceCall.status === "idle" && (
+								<div className="text-center space-y-6">
+									<div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-2xl shadow-green-500/50">
+										<Phone className="w-12 h-12 text-white" />
+									</div>
+									<div>
+										<h3 className="text-xl font-bold text-white mb-2">Ready to Connect</h3>
+										<p className="text-sm text-slate-400">
+											Start conversation in{" "}
+											{LANGUAGES.find((l) => l.code === selectedLanguage)?.name}
+										</p>
+									</div>
+									<button
+										onClick={handleStartCall}
+										className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-bold shadow-2xl shadow-green-500/50 transition-all transform hover:scale-105"
+									>
+										Start Call
+									</button>
+								</div>
+							)}
+
+							{voiceCall.status === "connecting" && (
+								<div className="text-center space-y-6">
+									<div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-2xl shadow-blue-500/50 animate-pulse">
+										<Phone className="w-12 h-12 text-white animate-bounce" />
+									</div>
+									<div>
+										<h3 className="text-xl font-bold text-white mb-2">Connecting...</h3>
+										<p className="text-sm text-slate-400">
+											Establishing secure connection
+										</p>
+									</div>
+								</div>
+							)}
+
+							{voiceCall.status === "active" && (
+								<div className="text-center space-y-6">
+									<div className="relative">
+										<div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-red-500/50">
+											<Mic className="w-12 h-12 text-white" />
+										</div>
+										{/* Pulse animation */}
+										<div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-red-500/20 animate-ping" />
+									</div>
+									<div>
+										<h3 className="text-xl font-bold text-white mb-2">Call in Progress</h3>
+										<div className="flex items-center justify-center gap-2">
+											<div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+											<p className="text-sm text-slate-400">Recording</p>
+										</div>
+									</div>
+									<button
+										onClick={handleEndCall}
+										className="w-full px-8 py-4 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white rounded-xl font-bold shadow-2xl shadow-red-500/50 transition-all transform hover:scale-105"
+									>
+										End Call
+									</button>
+								</div>
+							)}
+						</div>
+
+						{/* Call Stats - Active Call */}
+						{voiceCall.status === "active" && (
+							<div className="p-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl space-y-4">
+								<h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Call Metrics</h4>
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<p className="text-xs text-slate-500 mb-1">Turns</p>
+										<p className="text-2xl font-bold text-white">{voiceCall.metrics.turn_count}</p>
+									</div>
+									<div>
+										<p className="text-xs text-slate-500 mb-1">Duration</p>
+										<p className="text-2xl font-bold text-white">
+											{voiceCall.metrics.duration_s.toFixed(0)}s
+										</p>
+									</div>
+								</div>
+							</div>
+						)}
+
+						{/* Call Info - Active Call */}
+						{voiceCall.status === "active" && (
+							<div className="p-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl space-y-3">
+								<h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Session Info</h4>
+								<div className="space-y-2 text-xs">
+									<div className="flex justify-between">
+										<span className="text-slate-500">Agent</span>
+										<span className="text-white font-medium">Priya</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-slate-500">Customer</span>
+										<span className="text-white font-medium">Rahul</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-slate-500">Language</span>
+										<span className="text-white font-medium">
+											{LANGUAGES.find((l) => l.code === selectedLanguage)?.name}
+										</span>
+									</div>
+								</div>
+							</div>
+						)}
+					</div>
+
+					{/* Right Column - Transcript */}
+					<div className="lg:col-span-2">
+						<div className="h-[calc(100vh-12rem)] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden flex flex-col">
+							{/* Transcript Header */}
+							<div className="px-6 py-4 bg-white/5 border-b border-white/10 flex items-center justify-between">
+								<div className="flex items-center gap-3">
+									<Volume2 className="w-5 h-5 text-blue-400" />
+									<h2 className="text-lg font-semibold text-white">Live Transcript</h2>
+								</div>
+								{voiceCall.status === "active" && (
+									<div className="flex items-center gap-2">
+										<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+										<span className="text-xs text-slate-400">Recording</span>
+									</div>
+								)}
+							</div>
+
+							{/* Transcript Content */}
+							<div className="flex-1 overflow-y-auto p-6 space-y-4">
+								{voiceCall.transcript.length === 0 && voiceCall.status === "idle" && (
+									<div className="h-full flex items-center justify-center text-center">
+										<div>
+											<Phone className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+											<p className="text-slate-400">Click "Start Call" to begin conversation</p>
+										</div>
+									</div>
+								)}
+
+								{voiceCall.transcript.length === 0 && voiceCall.status === "connecting" && (
+									<div className="h-full flex items-center justify-center text-center">
+										<div>
+											<div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+											<p className="text-slate-400">Connecting to agent...</p>
+										</div>
+									</div>
+								)}
+
+								{/* Chat Messages */}
+								{voiceCall.transcript.map((item, idx) => (
+									<div
+										key={idx}
+										className={`flex ${item.type === "agent_text" ? "justify-start" : "justify-end"}`}
+									>
+										<div
+											className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+												item.type === "agent_text"
+													? "bg-blue-500/20 border border-blue-500/30 text-white"
+													: item.type === "asr_partial"
+													? "bg-white/5 border border-white/10 text-slate-400 italic"
+													: "bg-green-500/20 border border-green-500/30 text-white"
+											}`}
+										>
+											<div className="flex items-start gap-2">
+												{item.type === "agent_text" && (
+													<span className="text-xs text-blue-400 font-semibold">Agent</span>
+												)}
+												{item.type !== "agent_text" && (
+													<span className="text-xs text-green-400 font-semibold">You</span>
+												)}
+											</div>
+											<p className="mt-1 text-sm leading-relaxed">{item.text}</p>
+										</div>
+									</div>
+								))}
+
+								<div ref={transcriptEndRef} />
+							</div>
+
+							{/* Contact Input - Conditional */}
+							{isAskingContact && (
+								<div className="p-4 bg-amber-500/10 border-t border-amber-500/30">
+									<div className="flex items-center gap-2 mb-2">
+										<span className="text-xs font-semibold text-amber-400 uppercase">📝 Type Contact Info</span>
+									</div>
+									<div className="flex gap-2">
+										<input
+											type="text"
+											value={contactInput}
+											onChange={(e) => setContactInput(e.target.value)}
+											onKeyPress={(e) => e.key === "Enter" && handleSendContact()}
+											placeholder="e.g. user@email.com or +919876543210"
+											className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+										/>
+										<button
+											onClick={handleSendContact}
+											className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl font-medium transition-all transform hover:scale-105"
+										>
+											<Send className="w-5 h-5" />
+										</button>
+									</div>
+									<p className="text-xs text-amber-400 mt-2">
+										⚠️ Type here to avoid mishearing. Press Enter or click Send.
+									</p>
+								</div>
+							)}
+						</div>
+					</div>
+				</div>
+
+				{/* Call Summary - After Ended */}
+				{voiceCall.status === "ended" && (
+					<div className="mt-6 p-8 bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-white/20 rounded-2xl">
+						<h2 className="text-3xl font-bold text-white mb-6">Call Summary</h2>
+
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+							<div className="text-center p-4 bg-white/5 rounded-xl">
+								<p className="text-sm text-slate-400 mb-2">Total Turns</p>
+								<p className="text-4xl font-bold text-white">{voiceCall.metrics.turn_count}</p>
+							</div>
+							<div className="text-center p-4 bg-white/5 rounded-xl">
+								<p className="text-sm text-slate-400 mb-2">Duration</p>
+								<p className="text-4xl font-bold text-white">
+									{voiceCall.metrics.duration_s.toFixed(1)}s
+								</p>
+							</div>
+							<div className="text-center p-4 bg-white/5 rounded-xl">
+								<p className="text-sm text-slate-400 mb-2">ASR</p>
+								<p className="text-2xl font-bold text-white">
+									{formatLatencyMs(voiceCall.metrics.last_latency?.asr_ms)}
+								</p>
+							</div>
+							<div className="text-center p-4 bg-white/5 rounded-xl">
+								<p className="text-sm text-slate-400 mb-2">LLM</p>
+								<p className="text-2xl font-bold text-white">
+									{formatLatencyMs(voiceCall.metrics.last_latency?.llm_ms)}
 								</p>
 							</div>
 						</div>
 
-						{/* Language Selector */}
-						{voiceCall.status === "idle" && (
-							<div className="flex items-center gap-3">
-								<Globe className="w-5 h-5 text-slate-500" />
-								<select
-									value={selectedLanguage}
-									onChange={(e) => setSelectedLanguage(e.target.value)}
-									className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium bg-white hover:bg-slate-50 focus:ring-2 focus:ring-primary focus:border-transparent"
-								>
-									{LANGUAGES.map((lang) => (
-										<option key={lang.code} value={lang.code}>
-											{lang.emoji} {lang.name}
-										</option>
-									))}
-								</select>
-							</div>
-						)}
-					</div>
-
-					{/* Call Controls */}
-					<div className="flex flex-col gap-4 justify-center items-center">
-						{voiceCall.status === "idle" && (
-							<>
-								{/* Real Call Section */}
-								<div className="flex flex-col gap-3 items-center p-6 bg-white rounded-xl shadow-lg border border-slate-200">
-									<h3 className="text-lg font-semibold text-slate-900">
-										Make Real Call
-									</h3>
-									<div className="flex flex-col sm:flex-row gap-3 w-full">
-										<input
-											type="tel"
-											placeholder="+919876543210"
-											value={customerPhone}
-											onChange={(e) => {
-												setCustomerPhone(e.target.value);
-												setRealCallStatus("idle");
-												setRealCallMessage("");
-											}}
-											className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-										/>
-										<button
-											type="button"
-											onClick={handleRealCall}
-											disabled={realCallStatus === "dialing"}
-											className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-										>
-											<Phone className="w-4 h-4" />
-											{realCallStatus === "dialing"
-												? "Calling..."
-												: "Call Real Number"}
-										</button>
-									</div>
-									{realCallMessage && (
-										<p
-											className={`text-xs text-center max-w-xl ${
-												realCallStatus === "error"
-													? "text-red-700"
-													: "text-green-700"
-											}`}
-										>
-											{realCallMessage}
-										</p>
-									)}
-									<p className="text-xs text-slate-500 text-center">
-										Requires Twilio setup. Uses real phone numbers.
-									</p>
-								</div>
-
-								{/* Browser Demo Call */}
-								<div className="flex gap-3">
-									<button
-										type="button"
-										onClick={handleStartCall}
-										className="group px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-3"
-									>
-										<Phone className="w-5 h-5" />
-										Start Call in{" "}
-										{LANGUAGES.find((l) => l.code === selectedLanguage)?.name}
-									</button>
-								</div>
-							</>
-						)}
-
-						{voiceCall.status === "connecting" && (
+						<div className="flex gap-4">
 							<button
-								type="button"
-								disabled
-								className="px-8 py-4 bg-slate-300 text-slate-600 rounded-xl cursor-not-allowed font-semibold flex items-center gap-3"
+								onClick={() => window.location.reload()}
+								className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl font-semibold transition-all"
 							>
-								<div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
-								Connecting...
+								Start New Call
 							</button>
-						)}
-
-						{voiceCall.status === "active" && (
-							<button
-								type="button"
-								onClick={handleEndCall}
-								className="px-8 py-4 bg-red-600 text-white rounded-xl hover:bg-red-700 font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-3"
+							<Link
+								href="/"
+								className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all text-center"
 							>
-								<PhoneOff className="w-5 h-5" />
-								End Call
-							</button>
-						)}
-					</div>
-
-					{/* Error Display */}
-					{voiceCall.error && (
-						<div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-							<p className="text-sm text-red-700 font-medium">
-								Error: {voiceCall.error}
-							</p>
-						</div>
-					)}
-
-					{/* Transcript Section */}
-					<div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-						<div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-							<h2 className="text-lg font-semibold text-slate-900">
-								Live Transcript
-							</h2>
-							{voiceCall.status === "active" && (
-								<div className="flex items-center gap-2">
-									<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-									<span className="text-sm text-slate-600">Recording</span>
-								</div>
-							)}
-						</div>
-
-						<div className="p-6">
-							{voiceCall.transcript.length === 0 &&
-								voiceCall.status === "idle" && (
-									<p className="text-center text-slate-500 py-12">
-										Click "Start Call" to begin conversation
-									</p>
-								)}
-							{voiceCall.transcript.length === 0 &&
-								voiceCall.status === "connecting" && (
-									<p className="text-center text-slate-500 py-12">
-										Connecting to agent...
-									</p>
-								)}
-							<Transcript items={voiceCall.transcript} />
-
-							{/* Text Input for Contact Info - Show only when agent asks */}
-							{voiceCall.status === "active" && (() => {
-								// Show input box only when agent asks for contact info
-								const lastAgentMsg = [...voiceCall.transcript]
-									.reverse()
-									.find(t => t.type === "agent_text");
-								const agentText = lastAgentMsg?.text?.toLowerCase() || "";
-								const isAskingContact =
-									agentText.includes("email") ||
-									agentText.includes("phone") ||
-									agentText.includes("whatsapp") ||
-									agentText.includes("sms") ||
-									agentText.includes("number") ||
-									agentText.includes("type kariye");
-
-								return isAskingContact ? (
-									<div className="mt-6 pt-6 border-t border-slate-200 bg-amber-50 rounded-lg p-4">
-										<label className="block text-sm font-medium text-slate-700 mb-2">
-											📝 Type Contact Info (Don't speak this)
-										</label>
-										<div className="flex gap-2">
-											<input
-												type="text"
-												placeholder="e.g. user@email.com or +919876543210"
-												className="flex-1 px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-												onKeyPress={(e) => {
-													if (e.key === "Enter" && e.currentTarget.value.trim()) {
-														voiceCall.sendText(e.currentTarget.value.trim());
-														e.currentTarget.value = "";
-													}
-												}}
-											/>
-											<button
-												type="button"
-												className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium"
-												onClick={(e) => {
-													const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-													if (input.value.trim()) {
-														voiceCall.sendText(input.value.trim());
-														input.value = "";
-													}
-												}}
-											>
-												Send
-											</button>
-										</div>
-										<p className="text-xs text-amber-700 mt-2 font-medium">
-											⚠️ Type here to avoid mishearing. Press Enter or click Send.
-										</p>
-									</div>
-								) : null;
-							})()}
+								Back to Home
+							</Link>
 						</div>
 					</div>
+				)}
 
-					{/* Call Summary (After Call Ends) */}
-					{voiceCall.status === "ended" && (
-						<div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-xl shadow-xl p-8">
-							<h2 className="text-2xl font-bold mb-6">Call Summary</h2>
-
-							<div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-								<div className="text-center">
-									<p className="text-sm text-slate-400 mb-2">Total Turns</p>
-									<p className="text-3xl font-bold">
-										{voiceCall.metrics.turn_count}
-									</p>
-								</div>
-
-								<div className="text-center">
-									<p className="text-sm text-slate-400 mb-2">Duration</p>
-									<p className="text-3xl font-bold">
-										{voiceCall.metrics.duration_s.toFixed(1)}s
-									</p>
-								</div>
-
-								{voiceCall.metrics.last_latency && (
-									<>
-										<div className="text-center">
-											<p className="text-sm text-slate-400 mb-2">Avg Latency</p>
-											<p className="text-2xl font-bold">
-												{formatLatencyMs(voiceCall.metrics.last_latency.e2e_ms)}
-											</p>
-										</div>
-
-										<div className="text-center">
-											<p className="text-sm text-slate-400 mb-2">LLM Time</p>
-											<p className="text-2xl font-bold">
-												{formatLatencyMs(voiceCall.metrics.last_latency.llm_ms)}
-											</p>
-										</div>
-									</>
-								)}
-							</div>
-
-							{voiceCall.metrics.last_latency && (
-								<div className="bg-slate-700/50 rounded-lg p-6 mb-6">
-									<h3 className="text-sm font-semibold text-slate-300 mb-4">
-										Performance Breakdown
-									</h3>
-									<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-										<div>
-											<p className="text-slate-400">ASR</p>
-											<p className="text-lg font-semibold">
-												{formatLatencyMs(voiceCall.metrics.last_latency.asr_ms)}
-											</p>
-										</div>
-										<div>
-											<p className="text-slate-400">LLM</p>
-											<p className="text-lg font-semibold">
-												{formatLatencyMs(voiceCall.metrics.last_latency.llm_ms)}
-											</p>
-										</div>
-										<div>
-											<p className="text-slate-400">TTS First Byte</p>
-											<p className="text-lg font-semibold">
-												{formatLatencyMs(
-													voiceCall.metrics.last_latency.tts_first_byte_ms,
-												)}
-											</p>
-										</div>
-										<div>
-											<p className="text-slate-400">End-to-End</p>
-											<p className="text-lg font-semibold">
-												{formatLatencyMs(voiceCall.metrics.last_latency.e2e_ms)}
-											</p>
-										</div>
-									</div>
-								</div>
-							)}
-
-							<div className="flex gap-4">
-								<button
-									type="button"
-									onClick={() => window.location.reload()}
-									className="flex-1 px-6 py-3 bg-white text-slate-900 rounded-lg hover:bg-slate-100 font-semibold transition-colors"
-								>
-									Start New Call
-								</button>
-								<Link
-									href="/"
-									className="flex-1 px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 font-semibold transition-colors text-center"
-								>
-									Back to Home
-								</Link>
-							</div>
-						</div>
-					)}
-
-					{/* Call Info */}
-					{voiceCall.status === "active" && (
-						<div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-							<div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600">
-								<div>
-									<span className="font-semibold">Call ID:</span> {callId}
-								</div>
-								<div>
-									<span className="font-semibold">Product:</span>{" "}
-									{PRODUCTS[product]}
-								</div>
-								<div>
-									<span className="font-semibold">Language:</span>{" "}
-									{LANGUAGES.find((l) => l.code === selectedLanguage)?.name}
-								</div>
-								<div>
-									<span className="font-semibold">Customer:</span> Rahul
-								</div>
-								<div>
-									<span className="font-semibold">Agent:</span> Priya
-								</div>
-							</div>
-						</div>
-					)}
-				</div>
+				{/* Error Display */}
+				{voiceCall.error && (
+					<div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+						<p className="text-sm text-red-400 font-medium">
+							Error: {voiceCall.error}
+						</p>
+					</div>
+				)}
 			</main>
 		</div>
 	);
