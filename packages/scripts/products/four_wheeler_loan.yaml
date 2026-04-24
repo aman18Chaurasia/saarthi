@@ -1,0 +1,43 @@
+# Four Wheeler Loan call script
+# Agent turns must average ≤30 words. Pause markers: <pause:wait_user/>
+product: four_wheeler_loan
+version: "0.1"
+
+nodes:
+  opener:
+    agent: |
+      Namaste! Main {agent_name}, {lender_name} se bol raha hoon.
+      {customer_name} ji? <pause:wait_user/>
+
+  identity_confirm:
+    agent: |
+      Ji, thank you. Main aapko car loan ke ek exclusive offer ke baare mein batana chahta tha.
+      Kya aap nayi car lene ka plan kar rahe hain? Bas 2 minute. <pause:wait_user/>
+
+  qualify:
+    agent: |
+      Great! Aapki monthly income kitni hai approximately?
+      Isse hum loan amount decide kar sakte hain. <pause:wait_user/>
+    follow_up:
+      agent: |
+        Accha. Aur kaunsi car dekh rahe hain — Maruti, Hyundai, ya koi aur brand?
+        Budget kitna hai roughly? <pause:wait_user/>
+
+  consent:
+    agent: |
+      Samajh gaya ji. Main aapko customize offer bhejne ke liye aapki details
+      record karna chahta hoon. Consent dete hain? <pause:wait_user/>
+
+  next_step:
+    agent: |
+      Perfect. Main aapko detailed car loan offer bhejunga.
+      SMS, WhatsApp, ya email — kaunsa better hai aapke liye? <pause:wait_user/>
+    follow_up:
+      agent: |
+        Great choice! Aur aapka [phone number ya email] kya hai?
+        Please type kariye chat mein taaki correct mile. <pause:wait_user/>
+
+  close:
+    agent: |
+      Bahut bahut shukriya ji! Aapki nayi car jaldi aaye.
+      Drive safe! <pause:end/>

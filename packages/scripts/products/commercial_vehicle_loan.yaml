@@ -1,6 +1,6 @@
-# Unsecured Loan call script
+# Commercial Vehicle Loan call script
 # Agent turns must average ≤25 words. Pause markers: <pause:wait_user/>
-product: unsecured_loan
+product: commercial_vehicle_loan
 version: "0.1"
 
 nodes:
@@ -11,7 +11,7 @@ nodes:
 
   identity_confirm:
     agent: |
-      Thank you. Main aapko ek unsecured loan offer ke baare mein baat karna chahta tha —
+      Thank you. Main aapko ek commercial vehicle loan offer ke baare mein baat karna chahta tha —
       kya abhi aapke paas 2 minute hain? <pause:wait_user/>
 
   qualify:
@@ -19,8 +19,8 @@ nodes:
       Great. Aapki monthly income approximately kitni hai? <pause:wait_user/>
     follow_up:
       agent: |
-        Aur aap is loan ka use kis purpose ke liye karna chahte hain?
-        Business, medical emergency, ya kuch aur? <pause:wait_user/>
+        Aur aap kis type ki vehicle lena chahte hain — truck, tempo, ya kuch aur?
+        Vehicle ka estimated price kya hai? <pause:wait_user/>
 
   consent:
     agent: |
@@ -29,7 +29,7 @@ nodes:
 
   next_step:
     agent: |
-      Perfect. Main aapko detailed unsecured loan offer bhejunga.
+      Perfect. Main aapko detailed commercial vehicle loan offer bhejunga.
       SMS, WhatsApp, ya email — kaunsa better hai aapke liye? <pause:wait_user/>
     follow_up:
       agent: |

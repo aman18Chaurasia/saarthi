@@ -11,6 +11,9 @@ from pydantic import BaseModel, Field
 # ── Slot set ──────────────────────────────────────────────────────────────────
 
 class SlotSet(BaseModel):
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_preference: Optional[Literal["sms", "whatsapp", "email"]] = None
     name_confirmed: bool = False
     has_time: Optional[bool] = None
     monthly_revenue_inr: Optional[int] = None

@@ -11,16 +11,17 @@ nodes:
 
   identity_confirm:
     agent: |
-      Thank you. Main aapko ek home loan offer ke baare mein baat karna chahta tha —
-      kya abhi aapke paas 2 minute hain? <pause:wait_user/>
+      Thank you ji. Dekhiye, main aapko ek special home loan offer ke baare mein baat karna chahta tha —
+      apna ghar lena ka sapna hai kya? Bas 2 minute lagenge. <pause:wait_user/>
 
   qualify:
     agent: |
-      Great. Aapki monthly income approximately kitni hai? <pause:wait_user/>
+      Bahut accha! Dekhiye, aapki monthly income kitni hai approximately?
+      Is se hum dekh sakte hain ki kitna loan mil sakta hai aapko. <pause:wait_user/>
     follow_up:
       agent: |
-        Aur aap jo property dekhne mein interested hain, uski approximate value kya hai?
-        Location bhi bataiye. <pause:wait_user/>
+        Perfect ji. Aur aap kahan property dekh rahe hain — kaunsa area ya city?
+        Naya construction hai ya existing flat? Budget kitna hai roughly? <pause:wait_user/>
 
   consent:
     agent: |
@@ -29,9 +30,14 @@ nodes:
 
   next_step:
     agent: |
-      Perfect. Aapko 24 ghante mein ek detailed offer SMS aur email par milega.
-      Koi bhi sawaal ho toh hum available hain. <pause:wait_user/>
+      Perfect. Main aapko detailed home loan offer bhejunga.
+      SMS, WhatsApp, ya email — kaunsa better hai aapke liye? <pause:wait_user/>
+    follow_up:
+      agent: |
+        Great choice! Aur aapka [phone number ya email] kya hai?
+        Please type kariye chat mein taaki correct mile. <pause:wait_user/>
 
   close:
     agent: |
-      Bahut bahut shukriya aapka samay dene ke liye. Have a great day! <pause:end/>
+      Thank you so much {customer_name} ji! Aapka ghar ka sapna jaldi pura ho.
+      Have a great day! <pause:end/>

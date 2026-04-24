@@ -11,27 +11,33 @@ nodes:
 
   identity_confirm:
     agent: |
-      Thank you. Main aapko ek education loan offer ke baare mein baat karna chahta tha —
-      kya abhi aapke paas 2 minute hain? <pause:wait_user/>
+      Thank you ji. Main education loan ke special offers ke baare mein baat karna chahta tha.
+      Kya aap ya aapke family mein koi higher studies ka plan hai? Bas 2 minute. <pause:wait_user/>
 
   qualify:
     agent: |
-      Great. Aapki ya aapke parents ki monthly income approximately kitni hai? <pause:wait_user/>
+      Bahut accha! Pehle yeh batayiye — aapki monthly family income kitni hai?
+      Parent aur student dono milake, approximately. <pause:wait_user/>
     follow_up:
       agent: |
-        Aur aap kis course aur institution ke liye loan chahte hain?
-        Course duration kitna hai? <pause:wait_user/>
+        Good ji. Aur course kaunsa hai — engineering, MBA, medical, ya abroad study?
+        Fees kitni hai approximately aur duration kitna? <pause:wait_user/>
 
   consent:
     agent: |
-      Main aapko ek tailored offer bhejne ke liye aapki basic details record karna chahta hoon.
-      Kya aap consent dete hain? <pause:wait_user/>
+      Samajh gaya ji. Main aapko customized education loan offer bhejne ke liye
+      basic details record kar sakta hoon? Permission dete hain? <pause:wait_user/>
 
   next_step:
     agent: |
-      Perfect. Aapko 24 ghante mein ek detailed offer SMS aur email par milega.
-      Koi bhi sawaal ho toh hum available hain. <pause:wait_user/>
+      Perfect. Main aapko detailed education loan offer bhejunga.
+      SMS, WhatsApp, ya email — kaunsa better hai aapke liye? <pause:wait_user/>
+    follow_up:
+      agent: |
+        Great choice! Aur aapka [phone number ya email] kya hai?
+        Please type kariye chat mein taaki correct mile. <pause:wait_user/>
 
   close:
     agent: |
-      Bahut bahut shukriya aapka samay dene ke liye. Have a great day! <pause:end/>
+      Thank you {customer_name} ji! Padhai acchi ho, future bright rahe.
+      All the best! <pause:end/>

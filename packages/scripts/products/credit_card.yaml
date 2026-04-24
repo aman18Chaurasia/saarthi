@@ -29,8 +29,12 @@ nodes:
 
   next_step:
     agent: |
-      Perfect. Aapko 24 ghante mein ek detailed offer SMS aur email par milega.
-      Koi bhi sawaal ho toh hum available hain. <pause:wait_user/>
+      Perfect. Main aapko detailed credit card offer bhejunga.
+      SMS, WhatsApp, ya email — kaunsa better hai aapke liye? <pause:wait_user/>
+    follow_up:
+      agent: |
+        Great choice! Aur aapka [phone number ya email] kya hai?
+        Please type kariye chat mein taaki correct mile. <pause:wait_user/>
 
   close:
     agent: |

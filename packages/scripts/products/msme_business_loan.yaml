@@ -1,6 +1,6 @@
-# Unsecured Loan call script
+# MSME Business Loan call script
 # Agent turns must average ≤25 words. Pause markers: <pause:wait_user/>
-product: unsecured_loan
+product: msme_business_loan
 version: "0.1"
 
 nodes:
@@ -11,16 +11,16 @@ nodes:
 
   identity_confirm:
     agent: |
-      Thank you. Main aapko ek unsecured loan offer ke baare mein baat karna chahta tha —
+      Thank you. Main aapko ek MSME business loan offer ke baare mein baat karna chahta tha —
       kya abhi aapke paas 2 minute hain? <pause:wait_user/>
 
   qualify:
     agent: |
-      Great. Aapki monthly income approximately kitni hai? <pause:wait_user/>
+      Great. Aapke business ki monthly revenue approximately kitni hai? <pause:wait_user/>
     follow_up:
       agent: |
-        Aur aap is loan ka use kis purpose ke liye karna chahte hain?
-        Business, medical emergency, ya kuch aur? <pause:wait_user/>
+        Aur aap is loan ka use apne business mein kisliye karna chahte hain —
+        expansion, working capital, ya machinery? <pause:wait_user/>
 
   consent:
     agent: |
@@ -29,7 +29,7 @@ nodes:
 
   next_step:
     agent: |
-      Perfect. Main aapko detailed unsecured loan offer bhejunga.
+      Perfect. Main aapko detailed MSME business loan offer bhejunga.
       SMS, WhatsApp, ya email — kaunsa better hai aapke liye? <pause:wait_user/>
     follow_up:
       agent: |
