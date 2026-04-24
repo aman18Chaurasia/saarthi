@@ -16,6 +16,9 @@ class SlotSet(BaseModel):
     monthly_income_inr: Optional[int] = None
     loan_purpose: Optional[str] = None
     consent_given: Optional[bool] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_preference: Optional[Literal["sms", "whatsapp", "email"]] = None
     outcome: Optional[Literal[
         "qualified", "not_qualified", "no_consent", "callback_requested", "dropped"
     ]] = None

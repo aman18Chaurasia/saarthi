@@ -26,6 +26,7 @@ export interface VoiceCallConfig {
   callId: string;
   customerId: string;
   product: string;
+  language?: string;
   agentName: string;
   lenderName: string;
   customerName: string;
@@ -44,6 +45,11 @@ export function useVoiceCall(config: VoiceCallConfig) {
   const wsRef = useRef<WebSocket | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  const statusRef = useRef<CallStatus>("idle");
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -65,6 +71,7 @@ export function useVoiceCall(config: VoiceCallConfig) {
         call_id: config.callId,
         customer_id: config.customerId,
         product: config.product,
+        language: config.language ?? "hi-IN",
         agent_name: config.agentName,
         lender_name: config.lenderName,
         customer_name: config.customerName,
@@ -131,10 +138,17 @@ export function useVoiceCall(config: VoiceCallConfig) {
           case "call_ended":
             console.log("[useVoiceCall] call_ended received:", msg);
             setStatus("ended");
+            const elapsed = startTimeRef.current
+              ? (Date.now() - startTimeRef.current) / 1000
+              : 0;
+            const serverDuration =
+              typeof msg.duration_s === "number" && msg.duration_s > 0
+                ? msg.duration_s
+                : elapsed;
             setMetrics((prev) => ({
               ...prev,
-              turn_count: msg.turn_count || prev.turn_count,
-              duration_s: msg.duration_s || prev.duration_s,
+              turn_count: msg.turn_count ?? prev.turn_count,
+              duration_s: serverDuration || prev.duration_s,
             }));
             if (pingIntervalRef.current) {
               clearInterval(pingIntervalRef.current);
@@ -174,10 +188,13 @@ export function useVoiceCall(config: VoiceCallConfig) {
     };
 
     ws.onclose = () => {
-      if (status === "active") {
+      if (statusRef.current === "active" || statusRef.current === "connecting") {
         setStatus("ended");
         const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        setMetrics((prev) => ({ ...prev, duration_s: elapsed }));
+        setMetrics((prev) => ({
+          ...prev,
+          duration_s: prev.duration_s > 0 ? prev.duration_s : elapsed,
+        }));
       }
       if (pingIntervalRef.current) {
         clearInterval(pingIntervalRef.current);
@@ -192,6 +209,26 @@ export function useVoiceCall(config: VoiceCallConfig) {
     }
   }, []);
 
+  const sendText = useCallback((text: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "text_input",
+          text: text.trim(),
+        })
+      );
+      // Add to transcript immediately for user feedback
+      setTranscript((prev) => [
+        ...prev,
+        {
+          type: "asr_final" as const,
+          text: text.trim(),
+          sequence: prev.length,
+        },
+      ]);
+    }
+  }, []);
+
   const endCall = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
@@ -201,9 +238,7 @@ export function useVoiceCall(config: VoiceCallConfig) {
           reason: "user_hangup",
         })
       );
-      wsRef.current.close();
     }
-    setStatus("ended");
   }, [config.callId]);
 
   useEffect(() => {
@@ -224,6 +259,7 @@ export function useVoiceCall(config: VoiceCallConfig) {
     error,
     connect,
     sendAudio,
+    sendText,
     endCall,
   };
 }
