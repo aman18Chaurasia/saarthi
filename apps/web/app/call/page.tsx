@@ -35,6 +35,25 @@ const LANGUAGES = [
 ];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const E164_PHONE_RE = /^\+[1-9]\d{7,14}$/;
+
+type RealCallStatus = "idle" | "dialing" | "success" | "error";
+
+function normalizePhoneNumber(value: string) {
+	const trimmed = value.trim().replace(/[\s().-]+/g, "");
+	return trimmed.startsWith("00") ? `+${trimmed.slice(2)}` : trimmed;
+}
+
+function extractApiError(payload: unknown, fallback: string) {
+	if (payload && typeof payload === "object" && "detail" in payload) {
+		const detail = (payload as { detail?: unknown }).detail;
+		if (typeof detail === "string") return detail;
+		if (Array.isArray(detail)) {
+			return detail.map((item) => JSON.stringify(item)).join("; ");
+		}
+	}
+	return fallback;
+}
 
 function formatLatencyMs(value: number | undefined) {
 	if (typeof value !== "number" || value <= 0) return "N/A";
@@ -51,6 +70,9 @@ export default function CallPage() {
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [selectedLanguage, setSelectedLanguage] = useState("hi-IN");
 	const [contactInput, setContactInput] = useState("");
+	const [customerPhone, setCustomerPhone] = useState("");
+	const [realCallStatus, setRealCallStatus] = useState<RealCallStatus>("idle");
+	const [realCallMessage, setRealCallMessage] = useState("");
 	const audioCaptureRef = useRef<AudioCapture | null>(null);
 	const audioPlaybackRef = useRef<AudioPlayback | null>(null);
 	const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -78,13 +100,8 @@ export default function CallPage() {
 
 	useEffect(() => {
 		if (voiceCall.status === "active" && !isInitialized) {
-			const capture = new AudioCapture({
-				sampleRate: 16000,
-				onChunk: voiceCall.sendAudio
-			});
-			const playback = new AudioPlayback({
-				sampleRate: 16000
-			});
+			const capture = new AudioCapture(voiceCall.sendAudio);
+			const playback = new AudioPlayback(16000);
 
 			audioCaptureRef.current = capture;
 			audioPlaybackRef.current = playback;
@@ -115,6 +132,78 @@ export default function CallPage() {
 		if (contactInput.trim()) {
 			voiceCall.sendText(contactInput.trim());
 			setContactInput("");
+		}
+	};
+
+	const handleRealCall = async () => {
+		const normalizedPhone = normalizePhoneNumber(customerPhone);
+
+		if (!normalizedPhone) {
+			setRealCallStatus("error");
+			setRealCallMessage("Please enter a phone number.");
+			return;
+		}
+
+		if (!E164_PHONE_RE.test(normalizedPhone)) {
+			setRealCallStatus("error");
+			setRealCallMessage(
+				"Use E.164 format, for example +919876543210. Do not include spaces or a leading local 0.",
+			);
+			return;
+		}
+
+		setRealCallStatus("dialing");
+		setRealCallMessage("Requesting Twilio outbound call...");
+
+		try {
+			const response = await fetch(`${API_BASE_URL}/call/outbound`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					customer_phone: normalizedPhone,
+					product,
+					language: selectedLanguage,
+					agent_name: "Priya",
+					lender_name: "Demo Bank",
+					customer_name: "Rahul",
+				}),
+			});
+
+			const text = await response.text();
+			let payload: unknown = {};
+			try {
+				payload = text ? JSON.parse(text) : {};
+			} catch {
+				payload = { detail: text };
+			}
+
+			if (!response.ok) {
+				throw new Error(
+					extractApiError(
+						payload,
+						`API ${response.status}: ${response.statusText}`,
+					),
+				);
+			}
+
+			const data = payload as {
+				call_sid?: string;
+				call_id?: string;
+				to?: string;
+			};
+			setCustomerPhone(normalizedPhone);
+			setRealCallStatus("success");
+			setRealCallMessage(
+				`Call initiated to ${data.to ?? normalizedPhone}. SID: ${data.call_sid ?? "pending"}`,
+			);
+		} catch (error) {
+			console.error("Error initiating call:", error);
+			setRealCallStatus("error");
+			setRealCallMessage(
+				error instanceof Error ? error.message : "Failed to initiate call.",
+			);
 		}
 	};
 
@@ -197,12 +286,47 @@ export default function CallPage() {
 											{LANGUAGES.find((l) => l.code === selectedLanguage)?.name}
 										</p>
 									</div>
-									<button
-										onClick={handleStartCall}
-										className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-bold shadow-2xl shadow-green-500/50 transition-all transform hover:scale-105"
-									>
-										Start Call
-									</button>
+
+									{/* Real Call Section */}
+									<div className="space-y-3 pt-4 border-t border-white/10">
+										<h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Real Phone Call</h4>
+										<input
+											type="tel"
+											placeholder="+919876543210"
+											value={customerPhone}
+											onChange={(e) => {
+												setCustomerPhone(e.target.value);
+												setRealCallStatus("idle");
+												setRealCallMessage("");
+											}}
+											className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+										/>
+										<button
+											onClick={handleRealCall}
+											disabled={realCallStatus === "dialing"}
+											className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+										>
+											<Phone className="w-4 h-4" />
+											{realCallStatus === "dialing" ? "Calling..." : "Call Real Number"}
+										</button>
+										{realCallMessage && (
+											<p className={`text-xs ${
+												realCallStatus === "error" ? "text-red-400" : "text-green-400"
+											}`}>
+												{realCallMessage}
+											</p>
+										)}
+										<p className="text-xs text-slate-500">Requires Twilio setup</p>
+									</div>
+
+									<div className="pt-4 border-t border-white/10">
+										<button
+											onClick={handleStartCall}
+											className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-bold shadow-2xl shadow-green-500/50 transition-all transform hover:scale-105"
+										>
+											Start Browser Demo
+										</button>
+									</div>
 								</div>
 							)}
 
