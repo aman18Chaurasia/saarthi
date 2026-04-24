@@ -395,6 +395,14 @@ export default function CallPage() {
 								<h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Session Info</h4>
 								<div className="space-y-2 text-xs">
 									<div className="flex justify-between">
+										<span className="text-slate-500">Call ID</span>
+										<span className="text-white font-medium font-mono">{callId}</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-slate-500">Product</span>
+										<span className="text-white font-medium">{PRODUCTS[product]}</span>
+									</div>
+									<div className="flex justify-between">
 										<span className="text-slate-500">Agent</span>
 										<span className="text-white font-medium">Priya</span>
 									</div>
@@ -529,18 +537,52 @@ export default function CallPage() {
 								</p>
 							</div>
 							<div className="text-center p-4 bg-white/5 rounded-xl">
-								<p className="text-sm text-slate-400 mb-2">ASR</p>
+								<p className="text-sm text-slate-400 mb-2">ASR Latency</p>
 								<p className="text-2xl font-bold text-white">
 									{formatLatencyMs(voiceCall.metrics.last_latency?.asr_ms)}
 								</p>
 							</div>
 							<div className="text-center p-4 bg-white/5 rounded-xl">
-								<p className="text-sm text-slate-400 mb-2">LLM</p>
+								<p className="text-sm text-slate-400 mb-2">LLM Latency</p>
 								<p className="text-2xl font-bold text-white">
 									{formatLatencyMs(voiceCall.metrics.last_latency?.llm_ms)}
 								</p>
 							</div>
 						</div>
+
+						{voiceCall.metrics.last_latency && (
+							<div className="mb-8 p-6 bg-white/5 rounded-xl">
+								<h3 className="text-lg font-semibold text-slate-300 mb-4">
+									Performance Breakdown
+								</h3>
+								<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+									<div>
+										<p className="text-slate-400 mb-1">ASR</p>
+										<p className="text-xl font-semibold text-white">
+											{formatLatencyMs(voiceCall.metrics.last_latency.asr_ms)}
+										</p>
+									</div>
+									<div>
+										<p className="text-slate-400 mb-1">LLM</p>
+										<p className="text-xl font-semibold text-white">
+											{formatLatencyMs(voiceCall.metrics.last_latency.llm_ms)}
+										</p>
+									</div>
+									<div>
+										<p className="text-slate-400 mb-1">TTS First Byte</p>
+										<p className="text-xl font-semibold text-white">
+											{formatLatencyMs(voiceCall.metrics.last_latency.tts_first_byte_ms)}
+										</p>
+									</div>
+									<div>
+										<p className="text-slate-400 mb-1">End-to-End</p>
+										<p className="text-xl font-semibold text-white">
+											{formatLatencyMs(voiceCall.metrics.last_latency.e2e_ms)}
+										</p>
+									</div>
+								</div>
+							</div>
+						)}
 
 						<div className="flex gap-4">
 							<button
