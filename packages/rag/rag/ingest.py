@@ -41,7 +41,7 @@ async def ingest_documents():
     print(f"Created collection: {collection_name}")
 
     # Load documents
-    docs_dir = Path(__file__).parents[2] / "fixtures" / "documents"
+    docs_dir = Path(__file__).parents[3] / "fixtures" / "documents"
     brochures_dir = docs_dir / "brochures"
     faqs_dir = docs_dir / "rbi_faqs"
 
@@ -111,7 +111,7 @@ async def ingest_documents():
     ]
 
     client.upsert(collection_name=collection_name, points=points)
-    print(f"\n✓ Uploaded {len(points)} points to Qdrant collection '{collection_name}'")
+    print(f"\nUploaded {len(points)} points to Qdrant collection '{collection_name}'")
 
     # Verify
     collection_info = client.get_collection(collection_name)

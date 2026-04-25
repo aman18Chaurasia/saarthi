@@ -7,9 +7,9 @@ from typing import Any
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from main import app
-from models.call import Call
-from routes.analytics import get_session
+from apps.api.main import app
+from apps.api.models.call import Call
+from apps.api.routes.analytics import get_session
 
 
 class _FakeResult:
@@ -96,6 +96,11 @@ def _call(
         duration_s=duration_s,
         turn_count=turn_count,
         latency_stats={"e2e_p50": latency, "e2e_p95": latency + 50},
+        transcript_redacted=[
+            {"speaker": "customer", "text": "eligibility kya hai", "node": "qualify", "turn_index": 1},
+            {"speaker": "agent", "text": "documents PAN and Aadhaar", "node": "qualify_followup", "turn_index": 2},
+        ],
+        slots_redacted={"monthly_income_inr": 50000},
     )
 
 
@@ -124,6 +129,15 @@ async def test_analytics_summary_computes_rates_and_latency(override_session: No
         "avg_turn_count": 5.0,
         "p50_latency": 200.0,
         "p95_latency": 350.0,
+        "high_priority_calls": 1,
+        "follow_up_queue": 2,
+        "handoff_queue": 1,
+        "avg_lead_score": 64.67,
+        "negative_sentiment_rate": 0.0,
+        "top_objections": [
+            {"objection": "documents", "count": 3},
+            {"objection": "eligibility", "count": 3},
+        ],
     }
 
 
@@ -136,5 +150,31 @@ async def test_analytics_by_product_includes_all_products(override_session: None
     products = {row["product"]: row for row in resp.json()}
     assert products["personal_loan"]["call_count"] == 2
     assert products["personal_loan"]["qualified_rate"] == 50.0
+    assert products["personal_loan"]["avg_lead_score"] > 0
     assert products["home_loan"]["call_count"] == 1
     assert products["credit_card"]["call_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_call_detail_returns_transcript_and_intelligence(override_session: None) -> None:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get("/api/calls/call_001")
+
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["call_id"] == "call_001"
+    assert payload["transcript_redacted"][0]["text"] == "eligibility kya hai"
+    assert payload["intelligence"]["lead_score"] >= 80
+    assert "documents" in payload["intelligence"]["objections"]
+
+
+@pytest.mark.asyncio
+async def test_analytics_ops_returns_follow_up_metrics(override_session: None) -> None:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get("/api/analytics/ops")
+
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["follow_up_queue"] == 2
+    assert payload["high_priority_calls"] == 1
+    assert payload["avg_lead_score"] > 0

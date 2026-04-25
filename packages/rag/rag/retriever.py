@@ -47,15 +47,15 @@ async def retrieve_context(
 
     try:
         # Search
-        results = client.search(
+        response = client.query_points(
             collection_name=collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             query_filter=query_filter,
             limit=top_k
         )
 
         # Extract text from results
-        contexts = [hit.payload["text"] for hit in results]
+        contexts = [hit.payload["text"] for hit in response.points if hit.payload]
         return "\n\n".join(contexts)
 
     except Exception as e:

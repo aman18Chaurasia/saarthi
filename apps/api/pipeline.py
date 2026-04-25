@@ -1,15 +1,19 @@
-"""Pipecat pipeline factory for SAARTHI Phase 1 voice calls.
+"""Pipecat pipeline factory for SAARTHI voice calls.
 
 build_pipeline() wires:
   AudioRawFrame in
     -> VADProcessor (webrtcvad, 20 ms frames, speech boundaries)
     -> ASRProcessor (Groq Whisper, utterance buffer)
-    -> LangGraphProcessor (personal-loan dialog state machine)
-    -> TTSProcessor (ElevenLabs turbo_v2_5 streaming)
+    -> LangGraphProcessor (dynamic product dialog state machine)
+    -> TTSProcessor (configured streaming TTS provider)
   AudioRawFrame out (PCM 16 kHz mono)
 
 All external API calls are injected as callables so the pipeline is
 fully unit-testable without network access.
+
+The llm_fn is wrapped by LiveConversationSupervisor for every call,
+providing: shared compliance guidance, conversation memory, sentiment
+analysis, objection routing, and live RAG for all 10 products.
 """
 from __future__ import annotations
 
@@ -25,10 +29,10 @@ from pipecat.pipeline.pipeline import Pipeline
 
 # Phase 2: Dynamic imports per product (see build_pipeline)
 from dialog.personal_loan.state import DialogState  # type hint only
-from frame_processors.asr_processor import ASRProcessor
-from frame_processors.langgraph_processor import LangGraphProcessor
-from frame_processors.tts_processor import TTSProcessor
-from frame_processors.vad_processor import VADProcessor
+from .frame_processors.asr_processor import ASRProcessor
+from .frame_processors.langgraph_processor import LangGraphProcessor
+from .frame_processors.tts_processor import TTSProcessor
+from .frame_processors.vad_processor import VADProcessor
 
 # Groq Whisper endpoint
 _GROQ_WHISPER_MODEL = os.environ.get("GROQ_WHISPER_MODEL", "whisper-large-v3")
@@ -72,17 +76,22 @@ def _build_product_graph(
     build_graph: Callable[..., Any],
     llm_fn: Callable[..., Awaitable[Any]],
     eligibility_fn: Callable[..., Awaitable[Any]] | None,
+    rag_fn: Callable[..., Awaitable[Any]] | None = None,
 ) -> Any:
     params = inspect.signature(build_graph).parameters
+    kwargs = {}
     if "eligibility_fn" in params:
-        return build_graph(llm_fn, eligibility_fn=eligibility_fn)
-    return build_graph(llm_fn)
+        kwargs["eligibility_fn"] = eligibility_fn
+    if "rag_fn" in params:
+        kwargs["rag_fn"] = rag_fn
+    return build_graph(llm_fn, **kwargs) if kwargs else build_graph(llm_fn)
 
 
 def build_pipeline(
     call_id: str,
     initial_state: DialogState,
     *,
+    language: str = "en-IN",
     # Injectable dependencies; callers can substitute mocks in tests
     transcribe_fn: Callable[[bytes], Awaitable[str]] | None = None,
     llm_fn: Callable[..., Awaitable[Any]] | None = None,
@@ -106,8 +115,13 @@ def build_pipeline(
     """
     # ASR
     if transcribe_fn is None:
-        api_key = os.environ["GROQ_API_KEY"]
-        transcribe_fn = make_groq_transcribe_fn(api_key)
+        asr_provider = os.environ.get("ASR_PROVIDER", "groq").lower()
+        if asr_provider == "azure":
+            from voice.azure_provider import make_azure_transcribe_fn
+            transcribe_fn = make_azure_transcribe_fn(language=language)
+        else:
+            api_key = os.environ["GROQ_API_KEY"]
+            transcribe_fn = make_groq_transcribe_fn(api_key)
 
     # Phase 2: Dynamically load dialog module for product
     product = initial_state.product
@@ -137,27 +151,45 @@ def build_pipeline(
     except Exception:
         eligibility_fn = None
 
+    # Phase 2: RAG function (optional, knowledge base retrieval)
+    try:
+        from rag.retriever import retrieve_context
+        rag_fn = retrieve_context
+    except Exception:
+        rag_fn = None
+
+    # Wrap llm_fn with LiveConversationSupervisor for ALL products.
+    # This adds: compliance guidance, conversation memory, sentiment analysis,
+    # objection routing hints, and live RAG context for product questions.
+    try:
+        from dialog.live_supervisor import build_supervised_llm_fn
+        llm_fn = build_supervised_llm_fn(
+            call_id=call_id,
+            product=product,
+            base_llm_fn=llm_fn,
+            rag_fn=rag_fn,
+        )
+    except Exception as _sup_err:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "LiveConversationSupervisor unavailable (%s); using base llm_fn.", _sup_err
+        )
+
     # LangGraph dialog app
-    app = _build_product_graph(build_graph, llm_fn, eligibility_fn)
+    app = _build_product_graph(build_graph, llm_fn, eligibility_fn, rag_fn)
     graph_config: dict[str, Any] = {"configurable": {"thread_id": call_id}}
 
     # TTS
     if tts_provider is None:
-        tts_provider_name = os.environ.get("TTS_PROVIDER", "elevenlabs")
-        if tts_provider_name == "mock":
-            from voice.mock_tts_provider import MockTTSProvider
+        from voice.factory import get_tts_provider
 
-            tts_provider = MockTTSProvider()
-        else:
-            from voice.elevenlabs_provider import ElevenLabsProvider
-
-            tts_provider = ElevenLabsProvider()
+        tts_provider = get_tts_provider()
 
     # Processor chain
     vad = VADProcessor(vad_impl=vad_impl)
     asr = ASRProcessor(transcribe_fn=transcribe_fn, user_id=call_id)
     langgraph = LangGraphProcessor(app=app, config=graph_config)
-    tts = TTSProcessor(tts_provider=tts_provider)
+    tts = TTSProcessor(tts_provider=tts_provider, language=language)
 
     pipeline = Pipeline([vad, asr, langgraph, tts])
 

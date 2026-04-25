@@ -120,19 +120,34 @@ _SLOT_GUIDANCE: dict[str, str] = {
 # ── System prompt builder ─────────────────────────────────────────────────────
 
 _SYSTEM_TEMPLATE = """\
-You are {agent_name} from {lender_name}, conducting a unsecured_loan outbound call.
+You are {agent_name} from {lender_name}, conducting an unsecured loan outbound call.
 Customer name: {customer_name}
+Current conversation stage: {node_name}
 
-Your script for this turn (node: {node_name}):
+SCRIPT GUIDANCE (adapt naturally):
 {script_text}
 
 {slot_guidance}
 
-Respond ONLY with valid JSON matching this exact schema — no markdown, no preamble:
+CONVERSATION RULES:
+1. BE RESPONSIVE — listen to what the customer actually says
+2. Extract ANY number/purpose you hear as the relevant slot value
+3. Answer questions FIRST before continuing the script
+4. Acknowledge naturally: "Bilkul", "Bahut accha"
+5. Keep responses conversational in Hinglish — max 40 words
+6. MIXED LANGUAGE is normal — extract info anyway
+
+COMMON QUESTIONS & ANSWERS:
+Q: Interest rate? -> "Unsecured loan pe 11-16% per annum, income aur CIBIL pe depend karta hai"
+Q: Kitna loan milega? -> "Income ke basis pe Rs 50,000 se Rs 25 lakh tak"
+Q: Documents? -> "ID proof, address proof, salary slip ya ITR chahiye"
+Q: Collateral? -> "No collateral needed — yeh unsecured loan hai"
+
+Respond ONLY with valid JSON — no markdown, no preamble:
 {{
   "classified_intent": "affirm" | "deny" | "provide_value" | "unclear",
   "slots_extracted": {{ <slot_key>: <value> }},
-  "agent_turn_text": "<your response, strictly follow the script, max 30 words>"
+  "agent_turn_text": "<natural conversational response in Hinglish>"
 }}"""
 
 
@@ -142,27 +157,42 @@ def build_messages(
     customer_name: str,
     node_name: str,
     asr_text: str,
+    history: list[Any] | None = None,
+    retry_count: int = 0,
+    sentiment_guidance: str = "",
+    memory_context: str = "",
+    rag_context: str = "",
 ) -> list[dict[str, str]]:
-    """Return the messages list to pass to the LLM for a single dialog turn."""
-    system = _SYSTEM_TEMPLATE.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-        node_name=node_name,
-        script_text=_NODE_SCRIPTS[node_name],
+    system_parts = []
+    if sentiment_guidance:
+        system_parts.append(sentiment_guidance)
+    if rag_context:
+        system_parts.append(f"KNOWLEDGE BASE CONTEXT:\n{rag_context}")
+    if memory_context:
+        system_parts.append(memory_context)
+    main_system = _SYSTEM_TEMPLATE.format(
+        agent_name=agent_name, lender_name=lender_name, customer_name=customer_name,
+        node_name=node_name, script_text=_NODE_SCRIPTS[node_name],
         slot_guidance=_SLOT_GUIDANCE[node_name],
     )
-    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    system_parts.append(main_system)
+    if retry_count > 0:
+        system_parts.append(f"\nNOTE: Retry {retry_count + 1}. Rephrase more clearly.")
+    messages: list[dict[str, str]] = [{"role": "system", "content": "\n\n".join(system_parts)}]
+    if history:
+        for turn in (history[-4:] if len(history) > 4 else history):
+            role = "assistant" if (getattr(turn, "speaker", None) or turn.get("speaker", "")) == "agent" else "user"
+            text = getattr(turn, "text", None) or turn.get("text", "")
+            if text:
+                messages.append({"role": role, "content": str(text)})
     if asr_text:
         messages.append({"role": "user", "content": asr_text})
     return messages
 
 
 def get_fallback_text(node_name: str, agent_name: str, lender_name: str, customer_name: str) -> str:
-    """Return the raw YAML script text as a fallback when the LLM call fails."""
     template = _NODE_SCRIPTS[node_name]
-    return template.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-    )
+    try:
+        return template.format(agent_name=agent_name, lender_name=lender_name, customer_name=customer_name)
+    except KeyError:
+        return template

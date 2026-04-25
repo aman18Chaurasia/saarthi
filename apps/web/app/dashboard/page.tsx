@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Clock, Gauge, PhoneCall } from "lucide-react";
+import { Activity, Clock, Gauge, PhoneCall, PhoneForwarded, ShieldAlert, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { type AnalyticsSummary, fetchJson } from "@/lib/api";
 
@@ -10,6 +10,9 @@ const metrics = [
   { key: "qualified_rate", title: "Qualified Rate", suffix: "%", icon: Activity },
   { key: "avg_duration_s", title: "Avg Duration", suffix: "s", icon: Clock },
   { key: "p95_latency", title: "p95 Latency", suffix: "ms", icon: Gauge },
+  { key: "avg_lead_score", title: "Avg Lead Score", suffix: "", icon: TrendingUp },
+  { key: "follow_up_queue", title: "Follow-up Queue", suffix: "", icon: PhoneForwarded },
+  { key: "handoff_queue", title: "Human Handoffs", suffix: "", icon: ShieldAlert },
 ] as const;
 
 export default function DashboardPage() {
@@ -28,7 +31,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
         {metrics.map(({ key, title, suffix, icon: Icon }) => (
           <div key={key} className="rounded-md border border-[#c9d6cf] bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
@@ -74,6 +77,62 @@ export default function DashboardPage() {
             />
           </div>
           {error && <p className="mt-5 text-sm text-red-200">Analytics API unavailable</p>}
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="rounded-md border border-[#c9d6cf] bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Top Operational Blockers</h2>
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#5d6b65]">
+              objection heat
+            </span>
+          </div>
+          <div className="space-y-3">
+            {data?.top_objections.length ? (
+              data.top_objections.map((item) => (
+                <div key={item.objection} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-800">
+                      {item.objection.replaceAll("_", " ")}
+                    </span>
+                    <span className="text-slate-500">{item.count}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-emerald-600"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          ((item.count || 0) / Math.max(data.top_objections[0]?.count || 1, 1)) * 100,
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">No objection data available yet.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-[#c9d6cf] bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">Risk Watch</h2>
+          <div className="mt-5 space-y-4">
+            <div>
+              <p className="text-sm text-slate-500">Negative Sentiment Rate</p>
+              <p className="mt-1 text-3xl font-semibold text-slate-900">
+                {data?.negative_sentiment_rate ?? 0}%
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Follow-up + Handoff Queue</p>
+              <p className="mt-1 text-3xl font-semibold text-slate-900">
+                {(data?.follow_up_queue ?? 0) + (data?.handoff_queue ?? 0)}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>

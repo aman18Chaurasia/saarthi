@@ -20,7 +20,7 @@ from pipecat.frames.frames import (
 )
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
-from frames import LatencyFrame
+from ..frames import LatencyFrame
 
 
 class ASRProcessor(FrameProcessor):

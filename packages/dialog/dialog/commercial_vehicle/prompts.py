@@ -1,11 +1,11 @@
 """Prompt assembly for the commercial vehicle dialog nodes.
 
-Loads commercial_vehicle.yaml once at module import and builds per-node system prompts.
+Loads commercial_vehicle_loan.yaml once at module import and builds per-node system prompts.
 The YAML is the single source of truth for all agent script text (ADR 0002 §5).
 
 YAML search order:
   1. COMMERCIAL_VEHICLE_YAML env var (absolute path)
-  2. packages/scripts/products/commercial_vehicle.yaml relative to repo root
+  2. packages/scripts/products/commercial_vehicle_loan.yaml relative to repo root
      (derived from this file's __file__ path)
 """
 from __future__ import annotations
@@ -27,12 +27,12 @@ def _load_yaml() -> dict[str, Any]:
     # packages/dialog/dialog/personal_loan/prompts.py
     # parents[3] = packages/dialog → parents[3].parent = packages
     repo_packages = Path(__file__).parents[3]
-    default_path = repo_packages / "scripts" / "products" / "commercial_vehicle.yaml"
+    default_path = repo_packages / "scripts" / "products" / "commercial_vehicle_loan.yaml"
     if default_path.exists():
         return yaml.safe_load(default_path.read_text(encoding="utf-8"))
 
     raise FileNotFoundError(
-        f"commercial_vehicle.yaml not found. Set COMMERCIAL_VEHICLE_YAML env var or "
+        f"commercial_vehicle_loan.yaml not found. Set COMMERCIAL_VEHICLE_YAML env var or "
         f"ensure the file exists at {default_path}"
     )
 
@@ -61,7 +61,15 @@ _NODE_SCRIPTS: dict[str, str] = {
     "opener":           _node_text("opener"),
     "identity_confirm": _node_text("identity_confirm"),
     "qualify":          _node_text("qualify"),
-    "qualify_followup": _node_text("qualify", "follow_up"),
+    "qualify_followup": (
+        "Extract: vehicle_type (string), vehicle_price_inr (integer).\n\n"
+        "EXAMPLES:\n"
+        "Customer: 'Truck chahiye, around 18 lakh' → {\"vehicle_type\": \"truck\", \"vehicle_price_inr\": 1800000}, intent: provide_value\n"
+        "Customer: 'Tempo dekh raha hoon, 9 lakh ka' → {\"vehicle_type\": \"tempo\", \"vehicle_price_inr\": 900000}, intent: provide_value\n"
+        "Customer: 'Pickup vehicle, budget 12 lakh' → {\"vehicle_type\": \"pickup\", \"vehicle_price_inr\": 1200000}, intent: provide_value\n"
+        "Customer: 'Bus chahiye' → {\"vehicle_type\": \"bus\"}, intent: provide_value\n\n"
+        "RULES: Extract vehicle type from the customer words and convert any stated budget into INR integer."
+    ),
     "consent":          _node_text("consent"),
     "next_step":        _node_text("next_step"),
     "close":            _node_text("close"),
@@ -109,19 +117,33 @@ _SLOT_GUIDANCE: dict[str, str] = {
 # ── System prompt builder ─────────────────────────────────────────────────────
 
 _SYSTEM_TEMPLATE = """\
-You are {agent_name} from {lender_name}, conducting a commercial vehicle outbound call.
+You are {agent_name} from {lender_name}, conducting a commercial vehicle loan outbound call.
 Customer name: {customer_name}
+Current conversation stage: {node_name}
 
-Your script for this turn (node: {node_name}):
+SCRIPT GUIDANCE (adapt naturally):
 {script_text}
 
 {slot_guidance}
 
-Respond ONLY with valid JSON matching this exact schema — no markdown, no preamble:
+CONVERSATION RULES:
+1. BE RESPONSIVE — listen to what the customer actually says
+2. Extract ANY number you hear as the relevant slot value
+3. Answer questions FIRST before continuing the script
+4. Acknowledge naturally: "Bilkul", "Bahut accha"
+5. Keep responses conversational in Hinglish — max 40 words
+6. MIXED LANGUAGE is normal — extract info anyway
+
+COMMON QUESTIONS & ANSWERS:
+Q: Interest rate? -> "Commercial vehicle loan pe 10-14% per annum, vehicle type pe depend karta hai"
+Q: Down payment? -> "Vehicle price ka 15-25% down payment chahiye"
+Q: Documents? -> "Driving license, income proof, vehicle quotation chahiye"
+
+Respond ONLY with valid JSON — no markdown, no preamble:
 {{
   "classified_intent": "affirm" | "deny" | "provide_value" | "unclear",
   "slots_extracted": {{ <slot_key>: <value> }},
-  "agent_turn_text": "<your response, strictly follow the script, max 30 words>"
+  "agent_turn_text": "<natural conversational response in Hinglish>"
 }}"""
 
 
@@ -131,27 +153,42 @@ def build_messages(
     customer_name: str,
     node_name: str,
     asr_text: str,
+    history: list[Any] | None = None,
+    retry_count: int = 0,
+    sentiment_guidance: str = "",
+    memory_context: str = "",
+    rag_context: str = "",
 ) -> list[dict[str, str]]:
-    """Return the messages list to pass to the LLM for a single dialog turn."""
-    system = _SYSTEM_TEMPLATE.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-        node_name=node_name,
-        script_text=_NODE_SCRIPTS[node_name],
+    system_parts = []
+    if sentiment_guidance:
+        system_parts.append(sentiment_guidance)
+    if rag_context:
+        system_parts.append(f"KNOWLEDGE BASE CONTEXT:\n{rag_context}")
+    if memory_context:
+        system_parts.append(memory_context)
+    main_system = _SYSTEM_TEMPLATE.format(
+        agent_name=agent_name, lender_name=lender_name, customer_name=customer_name,
+        node_name=node_name, script_text=_NODE_SCRIPTS[node_name],
         slot_guidance=_SLOT_GUIDANCE[node_name],
     )
-    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    system_parts.append(main_system)
+    if retry_count > 0:
+        system_parts.append(f"\nNOTE: Retry {retry_count + 1}. Rephrase more clearly.")
+    messages: list[dict[str, str]] = [{"role": "system", "content": "\n\n".join(system_parts)}]
+    if history:
+        for turn in (history[-4:] if len(history) > 4 else history):
+            role = "assistant" if (getattr(turn, "speaker", None) or turn.get("speaker", "")) == "agent" else "user"
+            text = getattr(turn, "text", None) or turn.get("text", "")
+            if text:
+                messages.append({"role": role, "content": str(text)})
     if asr_text:
         messages.append({"role": "user", "content": asr_text})
     return messages
 
 
 def get_fallback_text(node_name: str, agent_name: str, lender_name: str, customer_name: str) -> str:
-    """Return the raw YAML script text as a fallback when the LLM call fails."""
     template = _NODE_SCRIPTS[node_name]
-    return template.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-    )
+    try:
+        return template.format(agent_name=agent_name, lender_name=lender_name, customer_name=customer_name)
+    except KeyError:
+        return template

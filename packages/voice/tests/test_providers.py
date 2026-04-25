@@ -19,6 +19,23 @@ def test_hf_space_provider_returned_when_configured(monkeypatch: pytest.MonkeyPa
     assert isinstance(get_tts_provider(), XTTSHfSpaceProvider)
 
 
+def test_azure_provider_returned_when_configured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TTS_PROVIDER", "azure")
+    monkeypatch.setenv("AZURE_SPEECH_KEY", "test-key-not-real")
+    from voice.azure_provider import AzureTTSProvider
+    from voice.factory import get_tts_provider
+
+    assert isinstance(get_tts_provider(), AzureTTSProvider)
+
+
+def test_mock_provider_returned_when_configured(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TTS_PROVIDER", "mock")
+    from voice.factory import get_tts_provider
+    from voice.mock_tts_provider import MockTTSProvider
+
+    assert isinstance(get_tts_provider(), MockTTSProvider)
+
+
 def test_unknown_tts_provider_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TTS_PROVIDER", "unknown")
     from voice.factory import get_tts_provider

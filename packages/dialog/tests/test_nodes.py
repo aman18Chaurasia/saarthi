@@ -143,6 +143,15 @@ async def test_consent_sets_consent_true_on_affirm() -> None:
 
 
 @pytest.mark.asyncio
+async def test_consent_does_not_treat_raw_number_as_permission() -> None:
+    state = make_state(asr_text="Add number 1234567898721345")
+    llm = mock_llm_for({"consent": _r(intent="affirm", slots={"consent_given": True})})
+    result = await consent_node(state, llm)
+    assert result.slots.consent_given is None
+    assert "clear permission" in result.history[-1].text
+
+
+@pytest.mark.asyncio
 async def test_consent_sets_consent_false_on_deny() -> None:
     state = make_state(asr_text="Nahi chahiye")
     llm = mock_llm_for({"consent": _r(intent="deny", slots={"consent_given": False})})

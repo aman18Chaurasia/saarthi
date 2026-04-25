@@ -24,6 +24,7 @@ Usage (tests):
     See tests/conftest.py for the ConversationRunner helper.
 """
 from __future__ import annotations
+from typing import Any
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
@@ -61,7 +62,7 @@ _INTERRUPT_AFTER = [
 ]
 
 
-def build_graph(llm_fn: LLMCallable) -> CompiledStateGraph:
+def build_graph(llm_fn: LLMCallable, rag_fn: Any | None = None) -> CompiledStateGraph:
     """Build and compile the personal loan dialog graph.
 
     Args:
@@ -73,25 +74,25 @@ def build_graph(llm_fn: LLMCallable) -> CompiledStateGraph:
     """
     # Close over llm_fn so each wrapper matches LangGraph's (state,) signature
     async def _opener(state: DialogState) -> DialogState:
-        return await opener_node(state, llm_fn)
+        return await opener_node(state, llm_fn, rag_fn=rag_fn)
 
     async def _identity_confirm(state: DialogState) -> DialogState:
-        return await identity_confirm_node(state, llm_fn)
+        return await identity_confirm_node(state, llm_fn, rag_fn=rag_fn)
 
     async def _qualify(state: DialogState) -> DialogState:
-        return await qualify_node(state, llm_fn)
+        return await qualify_node(state, llm_fn, rag_fn=rag_fn)
 
     async def _qualify_followup(state: DialogState) -> DialogState:
-        return await qualify_followup_node(state, llm_fn)
+        return await qualify_followup_node(state, llm_fn, rag_fn=rag_fn)
 
     async def _consent(state: DialogState) -> DialogState:
-        return await consent_node(state, llm_fn)
+        return await consent_node(state, llm_fn, rag_fn=rag_fn)
 
     async def _next_step(state: DialogState) -> DialogState:
-        return await next_step_node(state, llm_fn)
+        return await next_step_node(state, llm_fn, rag_fn=rag_fn)
 
     async def _close(state: DialogState) -> DialogState:
-        return await close_node(state, llm_fn)
+        return await close_node(state, llm_fn, rag_fn=rag_fn)
 
     g: StateGraph = StateGraph(DialogState)
 

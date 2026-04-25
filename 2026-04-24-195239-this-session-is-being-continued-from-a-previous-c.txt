@@ -1,0 +1,25 @@
+ ▐▛███▜▌   Claude Code v2.1.119
+▝▜█████▛▘  Sonnet 4.5 · Claude Pro
+  ▘▘ ▝▝    D:\Major Project\saarthi
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+  Read 2 files (ctrl+o to expand)
+
+● Restart API with proper logging:
+
+● Bash(taskkill //F //IM python.exe 2>/dev/null; sleep 2)
+  ⎿  SUCCESS: The process "python.exe" with PID 17572 has been terminated.
+     SUCCESS: The process "python.exe" with PID 30984 has been terminated.
+     SUCCESS: The process "python.exe" with PID 6352 has been terminated.
+  ⎿  Read apps\web\app\dashboard\calls\page.tsx (350 lines)
+  ⎿  Referenced file apps\web\app\call\page.tsx
+  ⎿  Referenced file apps\web\app\call\page.tsx.backup
+  ⎿  Read apps\web\app\page.tsx (299 lines)
+  ⎿  Read apps\api\routes\engagement.py (421 lines)
+  ⎿  Skills restored (caveman:caveman, caveman:compress)
+  ⎿  You've hit your limit · resets 10:30pm (Asia/Calcutta)
+     /upgrade to increase your usage limit.
+
+✻ Cooked for 4m 40s

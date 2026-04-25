@@ -35,7 +35,7 @@ dev-dependencies = [
 ]
 
 [tool.pytest.ini_options]
-minversion = "8.0"
+minversion = "7.0"
 addopts = "-ra --strict-markers --import-mode=importlib"
 asyncio_mode = "auto"
 testpaths = ["apps", "packages"]

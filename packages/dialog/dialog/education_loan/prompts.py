@@ -92,16 +92,13 @@ _SLOT_GUIDANCE: dict[str, str] = {
         "CRITICAL: If you see ANY number in the response, extract it as monthly_income_inr. Be aggressive - any number = income."
     ),
     "qualify_followup": (
-        "Extract: loan_purpose (string).\n\n"
+        "Extract: course_name (string), institution_name (string), course_duration_years (integer).\n\n"
         "EXAMPLES:\n"
-        "Customer: 'Home renovation' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
-        "Customer: 'For my house repairs' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
-        "Customer: 'Travel' → {\"loan_purpose\": \"travel\"}, intent: provide_value\n"
-        "Customer: 'Medical emergency' → {\"loan_purpose\": \"medical\"}, intent: provide_value\n"
-        "Customer: 'Education' → {\"loan_purpose\": \"education\"}, intent: provide_value\n"
-        "Customer: 'Business' → {\"loan_purpose\": \"business\"}, intent: provide_value\n"
-        "Customer: 'Personal use' → {\"loan_purpose\": \"other\"}, intent: provide_value\n\n"
-        "VALID VALUES: home_renovation, travel, medical, education, business, other. Map customer words to closest match."
+        "Customer: 'MBA at NMIMS, 2 years' → {\"course_name\": \"MBA\", \"institution_name\": \"NMIMS\", \"course_duration_years\": 2}, intent: provide_value\n"
+        "Customer: 'Engineering karna hai, 4 year course hai' → {\"course_name\": \"Engineering\", \"course_duration_years\": 4}, intent: provide_value\n"
+        "Customer: 'Abroad masters in Canada' → {\"course_name\": \"Masters\", \"institution_name\": \"Canada university\"}, intent: provide_value\n"
+        "Customer: 'Medical in Manipal, 5 years' → {\"course_name\": \"Medical\", \"institution_name\": \"Manipal\", \"course_duration_years\": 5}, intent: provide_value\n\n"
+        "RULES: Extract the course name, institution if mentioned, and duration in years when stated."
     ),
     "consent": (
         "Extract: consent_given (bool).\n\n"
@@ -120,19 +117,34 @@ _SLOT_GUIDANCE: dict[str, str] = {
 # ── System prompt builder ─────────────────────────────────────────────────────
 
 _SYSTEM_TEMPLATE = """\
-You are {agent_name} from {lender_name}, conducting a education_loan outbound call.
+You are {agent_name} from {lender_name}, conducting an education loan outbound call.
 Customer name: {customer_name}
+Current conversation stage: {node_name}
 
-Your script for this turn (node: {node_name}):
+SCRIPT GUIDANCE (adapt naturally):
 {script_text}
 
 {slot_guidance}
 
-Respond ONLY with valid JSON matching this exact schema — no markdown, no preamble:
+CONVERSATION RULES:
+1. BE RESPONSIVE — listen to what the customer actually says
+2. Extract ANY number/name you hear as the relevant slot value
+3. Answer questions FIRST before continuing the script
+4. Acknowledge naturally: "Bilkul", "Bahut accha", "Samajh gaya"
+5. Keep responses conversational in Hinglish — max 40 words
+6. MIXED LANGUAGE is normal — extract info anyway
+
+COMMON QUESTIONS & ANSWERS:
+Q: Interest rate? -> "Education loan pe 8-11% per annum, course aur institution pe depend karta hai"
+Q: Kitna loan milega? -> "Course fee ka 90% tak cover hota hai, plus living expenses"
+Q: Documents? -> "Admission letter, fee structure, income proof, aur ID proof chahiye"
+Q: Moratorium period? -> "Course duration plus 6-12 months ka moratorium milta hai"
+
+Respond ONLY with valid JSON — no markdown, no preamble:
 {{
   "classified_intent": "affirm" | "deny" | "provide_value" | "unclear",
   "slots_extracted": {{ <slot_key>: <value> }},
-  "agent_turn_text": "<your response, strictly follow the script, max 30 words>"
+  "agent_turn_text": "<natural conversational response in Hinglish>"
 }}"""
 
 
@@ -142,27 +154,42 @@ def build_messages(
     customer_name: str,
     node_name: str,
     asr_text: str,
+    history: list[Any] | None = None,
+    retry_count: int = 0,
+    sentiment_guidance: str = "",
+    memory_context: str = "",
+    rag_context: str = "",
 ) -> list[dict[str, str]]:
-    """Return the messages list to pass to the LLM for a single dialog turn."""
-    system = _SYSTEM_TEMPLATE.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-        node_name=node_name,
-        script_text=_NODE_SCRIPTS[node_name],
+    system_parts = []
+    if sentiment_guidance:
+        system_parts.append(sentiment_guidance)
+    if rag_context:
+        system_parts.append(f"KNOWLEDGE BASE CONTEXT:\n{rag_context}")
+    if memory_context:
+        system_parts.append(memory_context)
+    main_system = _SYSTEM_TEMPLATE.format(
+        agent_name=agent_name, lender_name=lender_name, customer_name=customer_name,
+        node_name=node_name, script_text=_NODE_SCRIPTS[node_name],
         slot_guidance=_SLOT_GUIDANCE[node_name],
     )
-    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    system_parts.append(main_system)
+    if retry_count > 0:
+        system_parts.append(f"\nNOTE: Retry {retry_count + 1}. Rephrase more clearly.")
+    messages: list[dict[str, str]] = [{"role": "system", "content": "\n\n".join(system_parts)}]
+    if history:
+        for turn in (history[-4:] if len(history) > 4 else history):
+            role = "assistant" if (getattr(turn, "speaker", None) or turn.get("speaker", "")) == "agent" else "user"
+            text = getattr(turn, "text", None) or turn.get("text", "")
+            if text:
+                messages.append({"role": role, "content": str(text)})
     if asr_text:
         messages.append({"role": "user", "content": asr_text})
     return messages
 
 
 def get_fallback_text(node_name: str, agent_name: str, lender_name: str, customer_name: str) -> str:
-    """Return the raw YAML script text as a fallback when the LLM call fails."""
     template = _NODE_SCRIPTS[node_name]
-    return template.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-    )
+    try:
+        return template.format(agent_name=agent_name, lender_name=lender_name, customer_name=customer_name)
+    except KeyError:
+        return template

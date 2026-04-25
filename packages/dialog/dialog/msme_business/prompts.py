@@ -1,11 +1,11 @@
 """Prompt assembly for the msme_business dialog nodes.
 
-Loads msme_business.yaml once at module import and builds per-node system prompts.
+Loads msme_business_loan.yaml once at module import and builds per-node system prompts.
 The YAML is the single source of truth for all agent script text (ADR 0002 §5).
 
 YAML search order:
   1. MSME_BUSINESS_YAML env var (absolute path)
-  2. packages/scripts/products/msme_business.yaml relative to repo root
+  2. packages/scripts/products/msme_business_loan.yaml relative to repo root
      (derived from this file's __file__ path)
 """
 from __future__ import annotations
@@ -27,12 +27,12 @@ def _load_yaml() -> dict[str, Any]:
     # packages/dialog/dialog/msme_business/prompts.py
     # parents[3] = packages/dialog → parents[3].parent = packages
     repo_packages = Path(__file__).parents[3]
-    default_path = repo_packages / "scripts" / "products" / "msme_business.yaml"
+    default_path = repo_packages / "scripts" / "products" / "msme_business_loan.yaml"
     if default_path.exists():
         return yaml.safe_load(default_path.read_text(encoding="utf-8"))
 
     raise FileNotFoundError(
-        f"msme_business.yaml not found. Set MSME_BUSINESS_YAML env var or "
+        f"msme_business_loan.yaml not found. Set MSME_BUSINESS_YAML env var or "
         f"ensure the file exists at {default_path}"
     )
 
@@ -80,28 +80,23 @@ _SLOT_GUIDANCE: dict[str, str] = {
         "RULES: has_time=true if customer engages positively OR expresses interest. has_time=false ONLY if explicitly busy."
     ),
     "qualify": (
-        "Extract: monthly_income_inr (integer).\n\n"
+        "Extract: monthly_revenue_inr (integer).\n\n"
         "EXAMPLES:\n"
-        "Customer: 'Fifty thousand' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
-        "Customer: '50,000 rupees' → {\"monthly_income_inr\": 50000}, intent: provide_value\n"
-        "Customer: 'Rs. 3000' → {\"monthly_income_inr\": 3000}, intent: provide_value\n"
-        "Customer: '45k per month' → {\"monthly_income_inr\": 45000}, intent: provide_value\n"
-        "Customer: 'Around thirty thousand' → {\"monthly_income_inr\": 30000}, intent: provide_value\n"
-        "Customer: 'I make 25 thousand' → {\"monthly_income_inr\": 25000}, intent: provide_value\n"
+        "Customer: 'Monthly revenue 5 lakh hai' → {\"monthly_revenue_inr\": 500000}, intent: provide_value\n"
+        "Customer: 'Around 2.5 lakh per month' → {\"monthly_revenue_inr\": 250000}, intent: provide_value\n"
+        "Customer: '50,000 turnover hai' → {\"monthly_revenue_inr\": 50000}, intent: provide_value\n"
+        "Customer: '3 lakh ki sale hoti hai' → {\"monthly_revenue_inr\": 300000}, intent: provide_value\n"
         "Customer: 'Thank you' → {}, intent: unclear\n\n"
-        "CRITICAL: If you see ANY number in the response, extract it as monthly_income_inr. Be aggressive - any number = income."
+        "CRITICAL: If you see ANY monthly revenue, turnover, sales, or business collection number, extract it as monthly_revenue_inr."
     ),
     "qualify_followup": (
-        "Extract: loan_purpose (string).\n\n"
+        "Extract: business_purpose (string).\n\n"
         "EXAMPLES:\n"
-        "Customer: 'Home renovation' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
-        "Customer: 'For my house repairs' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
-        "Customer: 'Travel' → {\"loan_purpose\": \"travel\"}, intent: provide_value\n"
-        "Customer: 'Medical emergency' → {\"loan_purpose\": \"medical\"}, intent: provide_value\n"
-        "Customer: 'Education' → {\"loan_purpose\": \"education\"}, intent: provide_value\n"
-        "Customer: 'Business' → {\"loan_purpose\": \"business\"}, intent: provide_value\n"
-        "Customer: 'Personal use' → {\"loan_purpose\": \"other\"}, intent: provide_value\n\n"
-        "VALID VALUES: home_renovation, travel, medical, education, business, other. Map customer words to closest match."
+        "Customer: 'Working capital ke liye' → {\"business_purpose\": \"working_capital\"}, intent: provide_value\n"
+        "Customer: 'Business expansion' → {\"business_purpose\": \"expansion\"}, intent: provide_value\n"
+        "Customer: 'Machinery kharidni hai' → {\"business_purpose\": \"machinery\"}, intent: provide_value\n"
+        "Customer: 'Inventory aur stock ke liye' → {\"business_purpose\": \"inventory\"}, intent: provide_value\n\n"
+        "RULES: Map customer wording to the closest business purpose label: working_capital, expansion, machinery, inventory, or other."
     ),
     "consent": (
         "Extract: consent_given (bool).\n\n"
@@ -120,19 +115,34 @@ _SLOT_GUIDANCE: dict[str, str] = {
 # ── System prompt builder ─────────────────────────────────────────────────────
 
 _SYSTEM_TEMPLATE = """\
-You are {agent_name} from {lender_name}, conducting a msme_business outbound call.
+You are {agent_name} from {lender_name}, conducting an MSME business loan outbound call.
 Customer name: {customer_name}
+Current conversation stage: {node_name}
 
-Your script for this turn (node: {node_name}):
+SCRIPT GUIDANCE (adapt naturally):
 {script_text}
 
 {slot_guidance}
 
-Respond ONLY with valid JSON matching this exact schema — no markdown, no preamble:
+CONVERSATION RULES:
+1. BE RESPONSIVE — listen to what the customer actually says
+2. Extract ANY number/purpose you hear as the relevant slot value
+3. Answer questions FIRST before continuing the script
+4. Acknowledge naturally: "Bilkul", "Bahut accha"
+5. Keep responses conversational in Hinglish — max 40 words
+6. MIXED LANGUAGE is normal — extract info anyway
+
+COMMON QUESTIONS & ANSWERS:
+Q: Interest rate? -> "MSME loan pe 12-18% per annum, business vintage pe depend karta hai"
+Q: Kitna loan milega? -> "Rs 1 lakh se 2 crore tak, turnover ke basis pe"
+Q: Documents? -> "GST returns, bank statements, business proof chahiye"
+Q: Collateral chahiye? -> "Rs 10 lakh tak unsecured, usse zyada pe collateral lag sakta hai"
+
+Respond ONLY with valid JSON — no markdown, no preamble:
 {{
   "classified_intent": "affirm" | "deny" | "provide_value" | "unclear",
   "slots_extracted": {{ <slot_key>: <value> }},
-  "agent_turn_text": "<your response, strictly follow the script, max 30 words>"
+  "agent_turn_text": "<natural conversational response in Hinglish>"
 }}"""
 
 
@@ -142,27 +152,42 @@ def build_messages(
     customer_name: str,
     node_name: str,
     asr_text: str,
+    history: list[Any] | None = None,
+    retry_count: int = 0,
+    sentiment_guidance: str = "",
+    memory_context: str = "",
+    rag_context: str = "",
 ) -> list[dict[str, str]]:
-    """Return the messages list to pass to the LLM for a single dialog turn."""
-    system = _SYSTEM_TEMPLATE.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-        node_name=node_name,
-        script_text=_NODE_SCRIPTS[node_name],
+    system_parts = []
+    if sentiment_guidance:
+        system_parts.append(sentiment_guidance)
+    if rag_context:
+        system_parts.append(f"KNOWLEDGE BASE CONTEXT:\n{rag_context}")
+    if memory_context:
+        system_parts.append(memory_context)
+    main_system = _SYSTEM_TEMPLATE.format(
+        agent_name=agent_name, lender_name=lender_name, customer_name=customer_name,
+        node_name=node_name, script_text=_NODE_SCRIPTS[node_name],
         slot_guidance=_SLOT_GUIDANCE[node_name],
     )
-    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    system_parts.append(main_system)
+    if retry_count > 0:
+        system_parts.append(f"\nNOTE: Retry {retry_count + 1}. Rephrase more clearly.")
+    messages: list[dict[str, str]] = [{"role": "system", "content": "\n\n".join(system_parts)}]
+    if history:
+        for turn in (history[-4:] if len(history) > 4 else history):
+            role = "assistant" if (getattr(turn, "speaker", None) or turn.get("speaker", "")) == "agent" else "user"
+            text = getattr(turn, "text", None) or turn.get("text", "")
+            if text:
+                messages.append({"role": role, "content": str(text)})
     if asr_text:
         messages.append({"role": "user", "content": asr_text})
     return messages
 
 
 def get_fallback_text(node_name: str, agent_name: str, lender_name: str, customer_name: str) -> str:
-    """Return the raw YAML script text as a fallback when the LLM call fails."""
     template = _NODE_SCRIPTS[node_name]
-    return template.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-    )
+    try:
+        return template.format(agent_name=agent_name, lender_name=lender_name, customer_name=customer_name)
+    except KeyError:
+        return template

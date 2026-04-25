@@ -10,6 +10,7 @@ export class AudioCapture {
   private stream: MediaStream | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private processor: ScriptProcessorNode | null = null;
+  private sink: GainNode | null = null;
   private isCapturing = false;
   private buffer: number[] = [];
 
@@ -33,6 +34,8 @@ export class AudioCapture {
     // ScriptProcessorNode is deprecated but AudioWorklet requires separate file
     // For Phase 1 MVP, ScriptProcessorNode is acceptable
     this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+    this.sink = this.audioContext.createGain();
+    this.sink.gain.value = 0;
 
     this.processor.onaudioprocess = (event) => {
       const inputData = event.inputBuffer.getChannelData(0);
@@ -58,7 +61,8 @@ export class AudioCapture {
     };
 
     this.source.connect(this.processor);
-    this.processor.connect(this.audioContext.destination);
+    this.processor.connect(this.sink);
+    this.sink.connect(this.audioContext.destination);
     this.isCapturing = true;
   }
 
@@ -67,11 +71,13 @@ export class AudioCapture {
 
     this.processor?.disconnect();
     this.source?.disconnect();
+    this.sink?.disconnect();
     this.audioContext?.close();
     this.stream?.getTracks().forEach((track) => track.stop());
 
     this.processor = null;
     this.source = null;
+    this.sink = null;
     this.audioContext = null;
     this.stream = null;
     this.buffer = [];

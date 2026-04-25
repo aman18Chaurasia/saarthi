@@ -1,0 +1,1029 @@
+{
+  "total_personas": 50,
+  "matches": 45,
+  "accuracy": 0.9,
+  "results": [
+    {
+      "persona_id": "lap_secured_0000",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0001",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0002",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0003",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0004",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0005",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0006",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0007",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0008",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 75000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0009",
+      "turns": [
+        {
+          "customer": "I need a lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "Yes, I have time",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "My income is 75000",
+          "agent": "qualify"
+        },
+        {
+          "customer": "For general",
+          "agent": "qualify_followup"
+        },
+        {
+          "customer": "Yes, I consent",
+          "agent": "consent"
+        }
+      ],
+      "turn_count": 5,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0010",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0011",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0012",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "15000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0013",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0014",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0015",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 15000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "dropped",
+      "expected_outcome": "qualified",
+      "match": false
+    },
+    {
+      "persona_id": "lap_secured_0016",
+      "turns": [
+        {
+          "customer": "I need a lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "Yes, I have time",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "My income is 8000",
+          "agent": "qualify"
+        },
+        {
+          "customer": "For general",
+          "agent": "qualify_followup"
+        },
+        {
+          "customer": "Yes, I consent",
+          "agent": "consent"
+        }
+      ],
+      "turn_count": 5,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0017",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0018",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 8000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "dropped",
+      "expected_outcome": "not_qualified",
+      "match": false
+    },
+    {
+      "persona_id": "lap_secured_0019",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0020",
+      "turns": [
+        {
+          "customer": "I need a lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "Yes, I have time",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "My income is 8000",
+          "agent": "qualify"
+        },
+        {
+          "customer": "For general",
+          "agent": "qualify_followup"
+        },
+        {
+          "customer": "Yes, I consent",
+          "agent": "consent"
+        }
+      ],
+      "turn_count": 5,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0021",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0022",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0023",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0024",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 8000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0025",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0026",
+      "turns": [
+        {
+          "customer": "I need a lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "Yes, I have time",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "My income is 30000",
+          "agent": "qualify"
+        },
+        {
+          "customer": "For general",
+          "agent": "qualify_followup"
+        },
+        {
+          "customer": "Yes, I consent",
+          "agent": "consent"
+        }
+      ],
+      "turn_count": 5,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0027",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0028",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 75000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0029",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0030",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0031",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "15000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0032",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 8000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0033",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0034",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0035",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "75000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0036",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "8000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0037",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 15000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0038",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 8000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "not_qualified",
+      "expected_outcome": "not_qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0039",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 8000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "dropped",
+      "expected_outcome": "not_qualified",
+      "match": false
+    },
+    {
+      "persona_id": "lap_secured_0040",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0041",
+      "turns": [
+        {
+          "customer": "I need a lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "Yes, I have time",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "My income is 15000",
+          "agent": "qualify"
+        },
+        {
+          "customer": "For general",
+          "agent": "qualify_followup"
+        },
+        {
+          "customer": "Yes, I consent",
+          "agent": "consent"
+        }
+      ],
+      "turn_count": 5,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0042",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 15000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "dropped",
+      "expected_outcome": "qualified",
+      "match": false
+    },
+    {
+      "persona_id": "lap_secured_0043",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "15000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0044",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "15000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0045",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 15000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0046",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 30000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0047",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 30000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "dropped",
+      "expected_outcome": "qualified",
+      "match": false
+    },
+    {
+      "persona_id": "lap_secured_0048",
+      "turns": [
+        {
+          "customer": "Tell me about lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "30000 monthly",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 2,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    },
+    {
+      "persona_id": "lap_secured_0049",
+      "turns": [
+        {
+          "customer": "I'm interested in lap_secured",
+          "agent": "opener"
+        },
+        {
+          "customer": "What will this take long?",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "I guess I have a few minutes",
+          "agent": "identity_confirm"
+        },
+        {
+          "customer": "Around 15000",
+          "agent": "qualify"
+        }
+      ],
+      "turn_count": 4,
+      "outcome": "qualified",
+      "expected_outcome": "qualified",
+      "match": true
+    }
+  ]
+}

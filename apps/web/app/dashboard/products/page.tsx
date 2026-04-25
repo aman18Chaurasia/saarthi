@@ -44,6 +44,8 @@ export default function ProductsPage() {
               <th className="px-4 py-3">Calls</th>
               <th className="px-4 py-3">Qualified Rate</th>
               <th className="px-4 py-3">Avg Duration</th>
+              <th className="px-4 py-3">Lead Score</th>
+              <th className="px-4 py-3">Follow-ups</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#edf1ee]">
@@ -53,6 +55,8 @@ export default function ProductsPage() {
                 <td className="px-4 py-3 text-[#5d6b65]">{product.call_count}</td>
                 <td className="px-4 py-3 text-[#5d6b65]">{product.qualified_rate}%</td>
                 <td className="px-4 py-3 text-[#5d6b65]">{product.avg_duration}s</td>
+                <td className="px-4 py-3 text-[#5d6b65]">{product.avg_lead_score}</td>
+                <td className="px-4 py-3 text-[#5d6b65]">{product.follow_up_queue}</td>
               </tr>
             ))}
           </tbody>

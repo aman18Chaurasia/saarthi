@@ -149,6 +149,18 @@ wheels = [
 ]
 
 [[package]]
+name = "aiohttp-retry"
+version = "2.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9d/61/ebda4d8e3d8cfa1fd3db0fb428db2dd7461d5742cea35178277ad180b033/aiohttp_retry-2.9.1.tar.gz", hash = "sha256:8eb75e904ed4ee5c2ec242fefe85bf04240f685391c4879d8f541d6028ff01f1", size = 13608, upload-time = "2024-11-06T10:44:54.574Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/99/84ba7273339d0f3dfa57901b846489d2e5c2cd731470167757f1935fffbd/aiohttp_retry-2.9.1-py3-none-any.whl", hash = "sha256:66d2759d1921838256a05a3f80ad7e724936f083e35be5abb5e16eed6be6dc54", size = 9981, upload-time = "2024-11-06T10:44:52.917Z" },
+]
+
+[[package]]
 name = "aiosignal"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -326,6 +338,35 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/13/c3/c3dc3f564ce6877ecd2a05f8d751b9b27a8c320c2533a98b0c86349778d0/audioop_lts-0.2.2-cp314-cp314t-win32.whl", hash = "sha256:068aa17a38b4e0e7de771c62c60bbca2455924b67a8814f3b0dee92b5820c0b3", size = 27331, upload-time = "2025-08-05T16:43:14.19Z" },
     { url = "https://files.pythonhosted.org/packages/72/bb/b4608537e9ffcb86449091939d52d24a055216a36a8bf66b936af8c3e7ac/audioop_lts-0.2.2-cp314-cp314t-win_amd64.whl", hash = "sha256:a5bf613e96f49712073de86f20dbdd4014ca18efd4d34ed18c75bd808337851b", size = 31697, upload-time = "2025-08-05T16:43:15.193Z" },
     { url = "https://files.pythonhosted.org/packages/f6/22/91616fe707a5c5510de2cac9b046a30defe7007ba8a0c04f9c08f27df312/audioop_lts-0.2.2-cp314-cp314t-win_arm64.whl", hash = "sha256:b492c3b040153e68b9fdaff5913305aaaba5bb433d8a7f73d5cf6a64ed3cc1dd", size = 25206, upload-time = "2025-08-05T16:43:16.444Z" },
+]
+
+[[package]]
+name = "azure-cognitiveservices-speech"
+version = "1.49.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/88/c308ba229ac8909764ec91fffdadb5e50701e647bb39affc034f9f4a77d4/azure_cognitiveservices_speech-1.49.1-py3-none-macosx_10_14_x86_64.whl", hash = "sha256:4277720f7138ae2bc505ce8816efaba12dd1f08199f67513c7542be0c5d5092e", size = 3445929, upload-time = "2026-04-15T20:42:53.479Z" },
+    { url = "https://files.pythonhosted.org/packages/09/09/8cbbf86fd6ab1f1913f757ff97f65e6dec3d3e11f99139071f012a11cf4c/azure_cognitiveservices_speech-1.49.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:8c5e9ddee3a3f1f0e4cea6c3aa205c26d27d0938228fd1afdbe08328fdebbddd", size = 3244845, upload-time = "2026-04-15T20:42:55.92Z" },
+    { url = "https://files.pythonhosted.org/packages/08/55/0e78f90325bbc3b8e1015e87ace7d3e7fe55f2ba512b17e42f7e00cf8e00/azure_cognitiveservices_speech-1.49.1-py3-none-manylinux1_x86_64.whl", hash = "sha256:dd8823e2a51ca8e21e564a36aa91fbacc2afc0b7ac8484d9d9bd232482ada2b4", size = 2773295, upload-time = "2026-04-15T20:42:58.34Z" },
+    { url = "https://files.pythonhosted.org/packages/41/33/b69db703740fc2a3d1edbaa1729a9e9e6a125ee8197aa7eefa402bb4da32/azure_cognitiveservices_speech-1.49.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4915fb3ba53a6e576b2c124ad085a48cdbc784b65e244ff537a89b8b09166cae", size = 2707645, upload-time = "2026-04-15T20:43:00.111Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/f4/e774816997121791a909225cf9cd9ecebfe2fc6e0f1a36bcb0c43aaca6ec/azure_cognitiveservices_speech-1.49.1-py3-none-win_amd64.whl", hash = "sha256:00c728df1db1209ff34c49d818e6200e5a6074d634478f89cadcc26d7493d333", size = 2587861, upload-time = "2026-04-15T20:43:01.419Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/b2/54a7b9fd39e0e609b7013a91112be6ee90ba168bf75ff2d9b4041be7f3cc/azure_cognitiveservices_speech-1.49.1-py3-none-win_arm64.whl", hash = "sha256:c019a6b1611a76c088207ad5c61f1dc49bc103d207e298a16ce4e6dc5e2ddacb", size = 2340181, upload-time = "2026-04-15T20:43:03.208Z" },
+]
+
+[[package]]
+name = "azure-core"
+version = "1.39.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/34/83/bbde3faa84ddcb8eb0eca4b3ffb3221252281db4ce351300fe248c5c70b1/azure_core-1.39.0.tar.gz", hash = "sha256:8a90a562998dd44ce84597590fff6249701b98c0e8797c95fcdd695b54c35d74", size = 367531, upload-time = "2026-03-19T01:31:29.461Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/d6/8ebcd05b01a580f086ac9a97fb9fac65c09a4b012161cc97c21a336e880b/azure_core-1.39.0-py3-none-any.whl", hash = "sha256:4ac7b70fab5438c3f68770649a78daf97833caa83827f91df9c14e0e0ea7d34f", size = 218318, upload-time = "2026-03-19T01:31:31.25Z" },
 ]
 
 [[package]]
@@ -2803,6 +2844,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyjwt"
+version = "2.12.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/27/a3b6e5bf6ff856d2509292e95c8f57f0df7017cf5394921fc4e4ef40308a/pyjwt-2.12.1.tar.gz", hash = "sha256:c74a7a2adf861c04d002db713dd85f84beb242228e671280bf709d765b03672b", size = 102564, upload-time = "2026-03-13T19:27:37.25Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/7a/8dd906bd22e79e47397a61742927f6747fe93242ef86645ee9092e610244/pyjwt-2.12.1-py3-none-any.whl", hash = "sha256:28ca37c070cad8ba8cd9790cd940535d40274d22f80ab87f3ac6a713e6e8454c", size = 29726, upload-time = "2026-03-13T19:27:35.677Z" },
+]
+
+[[package]]
 name = "pyloudnorm"
 version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3311,6 +3361,7 @@ source = { editable = "apps/api" }
 dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
+    { name = "azure-cognitiveservices-speech" },
     { name = "en-core-web-lg" },
     { name = "fastapi" },
     { name = "langgraph" },
@@ -3325,6 +3376,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "qdrant-client" },
     { name = "redis" },
+    { name = "saarthi-dialog" },
     { name = "saarthi-eligibility" },
     { name = "saarthi-guardrail" },
     { name = "saarthi-llm-client" },
@@ -3334,6 +3386,7 @@ dependencies = [
     { name = "setuptools" },
     { name = "spacy" },
     { name = "sqlmodel" },
+    { name = "twilio" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "webrtcvad" },
 ]
@@ -3349,6 +3402,7 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.13" },
     { name = "asyncpg", specifier = ">=0.31.0" },
+    { name = "azure-cognitiveservices-speech", specifier = ">=1.49.1" },
     { name = "en-core-web-lg", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl" },
     { name = "fastapi", specifier = ">=0.111" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
@@ -3366,6 +3420,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "qdrant-client", specifier = ">=1.9" },
     { name = "redis", specifier = ">=5.0" },
+    { name = "saarthi-dialog", editable = "packages/dialog" },
     { name = "saarthi-eligibility", editable = "packages/eligibility" },
     { name = "saarthi-guardrail", editable = "packages/guardrail" },
     { name = "saarthi-llm-client", editable = "packages/llm_client" },
@@ -3375,6 +3430,7 @@ requires-dist = [
     { name = "setuptools", specifier = "<81" },
     { name = "spacy", specifier = ">=3.7" },
     { name = "sqlmodel", specifier = ">=0.0.19" },
+    { name = "twilio", specifier = ">=9.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
     { name = "webrtcvad", specifier = ">=2.0.10" },
 ]
@@ -4073,6 +4129,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a5/1e/1e244ab2ab50a863e6b52cc55761910567fa532b69a6740f6e99c5fdbd98/transformers-5.5.4.tar.gz", hash = "sha256:2e67cadba81fc7608cc07c4dd54f524820bc3d95b1cabd0ef3db7733c4f8b82e", size = 8227649, upload-time = "2026-04-13T16:55:55.181Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/29/fb/162a66789c65e5afa3b051309240c26bf37fbc8fea285b4546ae747995a2/transformers-5.5.4-py3-none-any.whl", hash = "sha256:0bd6281b82966fe5a7a16f553ea517a9db1dee6284d7cb224dfd88fc0dd1c167", size = 10236696, upload-time = "2026-04-13T16:55:51.497Z" },
+]
+
+[[package]]
+name = "twilio"
+version = "9.10.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "aiohttp-retry" },
+    { name = "pyjwt" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b5/97/c439bc2c058f8a24edd732f5cc82adedd8794bcc2da0836c2eff1e2dbe91/twilio-9.10.5.tar.gz", hash = "sha256:d9f93b9280349ee7b52e7f17a0600fd7bfd0f7ff88eb00c40270164bc058743f", size = 1641690, upload-time = "2026-04-14T09:52:09.392Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/97/4fdde5e54fcbb789aa1a70c371f2f33d7eb1e58e8a6131fdbd8a98490976/twilio-9.10.5-py2.py3-none-any.whl", hash = "sha256:7972db54496fbf501b238f34d1f717f80ff22720313dc706632787aad5934997", size = 2284944, upload-time = "2026-04-14T09:52:07.333Z" },
 ]
 
 [[package]]

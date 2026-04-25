@@ -9,6 +9,8 @@ Retry budget: retry_count <= 2 allows 3 total attempts per node before closing.
 """
 from __future__ import annotations
 
+from dialog.slot_requirements import followup_slot_captured, primary_slot_captured
+
 from .state import DialogNode, DialogState
 
 
@@ -18,7 +20,7 @@ def transition_opener(state: DialogState) -> DialogNode:
 
 def transition_identity_confirm(state: DialogState) -> DialogNode:
     # Advance when customer confirmed identity AND indicated they have time
-    if state.slots.name_confirmed and state.slots.has_time is True:
+    if state.slots.has_time is True:
         return "qualify"
     # Customer explicitly said they're busy
     if state.slots.has_time is False:
@@ -30,7 +32,7 @@ def transition_identity_confirm(state: DialogState) -> DialogNode:
 
 
 def transition_qualify(state: DialogState) -> DialogNode:
-    if state.slots.monthly_income_inr is not None:
+    if primary_slot_captured(state.slots):
         return "qualify_followup"
     if state.retry_count <= 2:
         return "qualify"
@@ -38,7 +40,7 @@ def transition_qualify(state: DialogState) -> DialogNode:
 
 
 def transition_qualify_followup(state: DialogState) -> DialogNode:
-    if state.slots.loan_purpose is not None:
+    if followup_slot_captured(state.slots):
         return "consent"
     if state.retry_count <= 2:
         return "qualify_followup"

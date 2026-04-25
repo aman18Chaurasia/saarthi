@@ -1,4 +1,4 @@
-.PHONY: up down api web test lint setup
+.PHONY: up down api web test lint setup seed seed-clear
 
 COMPOSE = docker compose -f infra/docker-compose.yml
 
@@ -33,3 +33,11 @@ lint:
 	uv run ruff check .
 	uv run mypy .
 	pnpm --filter web exec biome check .
+
+## seed: populate database with test call data
+seed:
+	uv run python apps/api/seed_data.py
+
+## seed-clear: clear all calls from database
+seed-clear:
+	uv run python apps/api/seed_data.py --clear

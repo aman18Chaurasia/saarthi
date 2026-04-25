@@ -1,6 +1,7 @@
 """LangGraph processor tests with a mocked graph."""
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -8,8 +9,8 @@ from pipecat.frames.frames import TextFrame, TranscriptionFrame
 from pipecat.tests.utils import run_test
 
 from dialog.personal_loan.state import SlotSet, TurnRecord
-from frame_processors.langgraph_processor import LangGraphProcessor, _extract_agent_text
-from frames import LatencyFrame
+from apps.api.frame_processors.langgraph_processor import LangGraphProcessor, _extract_agent_text
+from apps.api.frames import LatencyFrame
 
 
 def _make_state(agent_text: str = "Income kitni hai?") -> dict:
@@ -29,6 +30,12 @@ def _make_state(agent_text: str = "Income kitni hai?") -> dict:
 
 def _make_processor(agent_text: str = "Income kitni hai?") -> LangGraphProcessor:
     app = MagicMock()
+    app.aget_state = AsyncMock(
+        return_value=SimpleNamespace(
+            values={"current_node": "qualify", "product": "personal_loan"},
+            next=(),
+        )
+    )
     app.update_state = MagicMock()
     app.ainvoke = AsyncMock(return_value=_make_state(agent_text))
     config = {"configurable": {"thread_id": "test-call"}}
@@ -103,6 +110,12 @@ async def test_text_frame_comes_before_latency_frame() -> None:
 @pytest.mark.asyncio
 async def test_update_state_called_with_asr_text() -> None:
     app = MagicMock()
+    app.aget_state = AsyncMock(
+        return_value=SimpleNamespace(
+            values={"current_node": "qualify", "product": "personal_loan"},
+            next=(),
+        )
+    )
     app.update_state = MagicMock()
     app.ainvoke = AsyncMock(return_value=_make_state("test"))
     config = {"configurable": {"thread_id": "test"}}
@@ -124,3 +137,155 @@ async def test_non_transcription_frames_pass_through() -> None:
     # LangGraph processor should not touch non-transcription frames
     passed = [f for f in down if type(f) is TextFrame]
     assert any(f.text == "unrelated text" for f in passed)
+
+
+@pytest.mark.asyncio
+async def test_closed_call_product_question_gets_rag_answer() -> None:
+    async def fake_rag(query: str, product: str | None, top_k: int) -> str:
+        assert product == "personal_loan"
+        assert top_k == 2
+        return (
+            "## Key Features - Loan Amount: Rs 50,000 to Rs 10,00,000 "
+            "- Interest Rate: 10.5% - 18% p.a. - Processing Fee: 2% of loan amount "
+            "## Required Documents - PAN Card - Aadhaar Card - Last 3 months salary slips"
+        )
+
+    app = MagicMock()
+    app.aget_state = AsyncMock(
+        return_value=SimpleNamespace(
+            values={"current_node": "close", "product": "personal_loan", "turn_index": 5},
+            next=(),
+        )
+    )
+    app.update_state = MagicMock()
+    app.ainvoke = AsyncMock()
+    processor = LangGraphProcessor(
+        app=app,
+        config={"configurable": {"thread_id": "test"}},
+        closed_rag_fn=fake_rag,
+    )
+
+    transcription = TranscriptionFrame(
+        text="processing fee kitni hai?", user_id="u", timestamp="0", finalized=True
+    )
+    down, _up = await run_test(processor, frames_to_send=[transcription])
+
+    text_frames = [f for f in down if type(f) is TextFrame]
+    assert len(text_frames) == 1
+    assert "processing fee: 2% of loan amount" in text_frames[0].text
+    assert text_frames[0].metadata["node_name"] == "rag_after_close"
+    app.update_state.assert_not_called()
+    app.ainvoke.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_closed_call_non_question_stays_closed() -> None:
+    app = MagicMock()
+    app.aget_state = AsyncMock(
+        return_value=SimpleNamespace(
+            values={"current_node": "close", "product": "personal_loan"},
+            next=(),
+        )
+    )
+    app.update_state = MagicMock()
+    app.ainvoke = AsyncMock()
+    processor = LangGraphProcessor(app=app, config={"configurable": {"thread_id": "test"}})
+
+    transcription = TranscriptionFrame(
+        text="thank you", user_id="u", timestamp="0", finalized=True
+    )
+    down, _up = await run_test(processor, frames_to_send=[transcription])
+
+    text_frames = [f for f in down if type(f) is TextFrame]
+    assert text_frames == []
+    app.update_state.assert_not_called()
+    app.ainvoke.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_processor_auto_advances_next_step_but_not_close() -> None:
+    app = MagicMock()
+    app.aget_state = AsyncMock(
+        side_effect=[
+            SimpleNamespace(
+                values={"current_node": "consent", "product": "personal_loan"},
+                next=(),
+            ),
+            SimpleNamespace(
+                values={"current_node": "consent", "product": "personal_loan"},
+                next=("next_step",),
+            ),
+            SimpleNamespace(
+                values={"current_node": "next_step", "product": "personal_loan"},
+                next=("close",),
+            ),
+        ]
+    )
+    app.update_state = MagicMock()
+    app.ainvoke = AsyncMock(
+        side_effect=[
+            _make_state("Consent recorded."),
+            {
+                "current_node": "next_step",
+                "slots": SlotSet(),
+                "history": [
+                    TurnRecord(
+                        speaker="agent",
+                        text="Offer 24 ghante mein aayega.",
+                        node_name="next_step",
+                        turn_index=2,
+                    )
+                ],
+                "retry_count": 0,
+                "error_count": 0,
+                "turn_index": 3,
+                "asr_text": "haan",
+            },
+        ]
+    )
+    processor = LangGraphProcessor(app=app, config={"configurable": {"thread_id": "test"}})
+
+    transcription = TranscriptionFrame(text="haan", user_id="u", timestamp="0", finalized=True)
+    down, _up = await run_test(processor, frames_to_send=[transcription])
+
+    text_frames = [f.text for f in down if type(f) is TextFrame]
+    assert text_frames == [
+        "Consent recorded.",
+        "Offer 24 ghante mein aayega.",
+    ]
+
+    latency_frames = [f for f in down if isinstance(f, LatencyFrame)]
+    assert len(latency_frames) == 2
+    assert app.ainvoke.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_pending_close_product_question_gets_answer_without_closing() -> None:
+    async def fake_rag(query: str, product: str | None, top_k: int) -> str:
+        return "## Key Features - Minimum Monthly Income: Rs 25,000 - Interest Rate: 10.5%"
+
+    app = MagicMock()
+    app.aget_state = AsyncMock(
+        return_value=SimpleNamespace(
+            values={"current_node": "next_step", "product": "personal_loan", "turn_index": 6},
+            next=("close",),
+        )
+    )
+    app.update_state = MagicMock()
+    app.ainvoke = AsyncMock()
+    processor = LangGraphProcessor(
+        app=app,
+        config={"configurable": {"thread_id": "test"}},
+        closed_rag_fn=fake_rag,
+    )
+
+    transcription = TranscriptionFrame(
+        text="eligibility kya hai iski?", user_id="u", timestamp="0", finalized=True
+    )
+    down, _up = await run_test(processor, frames_to_send=[transcription])
+
+    text_frames = [f for f in down if type(f) is TextFrame]
+    assert len(text_frames) == 1
+    assert "minimum monthly income" in text_frames[0].text.lower()
+    app.update_state.assert_not_called()
+    app.ainvoke.assert_not_called()

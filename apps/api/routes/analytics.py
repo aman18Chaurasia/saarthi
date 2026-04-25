@@ -5,12 +5,13 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from db import get_session
-from models.call import Call
+from ..db import get_session
+from ..intelligence import call_intelligence, ops_summary
+from ..models.call import Call
 
 router = APIRouter()
 
@@ -21,10 +22,10 @@ PRODUCTS = [
     "gold_loan",
     "credit_card",
     "unsecured_loan",
-    "lap_secured",
-    "commercial_vehicle",
-    "four_wheeler",
-    "msme_business",
+    "loan_against_property",
+    "commercial_vehicle_loan",
+    "four_wheeler_loan",
+    "msme_business_loan",
 ]
 
 
@@ -52,6 +53,7 @@ def _call_to_dict(call: Call) -> dict[str, Any]:
         "turn_count": call.turn_count,
         "error_count": call.error_count,
         "audio_failed": call.audio_failed,
+        "slots_redacted": call.slots_redacted,
     }
 
 
@@ -99,6 +101,7 @@ def _summary(calls: list[Call]) -> dict[str, Any]:
         if isinstance(call.latency_stats.get("e2e_p95"), (int, float))
     ]
 
+    ops = ops_summary(calls)
     return {
         "total_calls": total,
         "qualified_count": qualified,
@@ -107,6 +110,7 @@ def _summary(calls: list[Call]) -> dict[str, Any]:
         "avg_turn_count": round(sum(turns) / len(turns), 2) if turns else 0.0,
         "p50_latency": _percentile(e2e_p50_values, 50),
         "p95_latency": _percentile(e2e_p95_values, 95),
+        **ops,
     }
 
 
@@ -140,6 +144,22 @@ async def list_calls(
     }
 
 
+@router.get("/calls/{call_id}")
+async def get_call_detail(
+    call_id: str,
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    for call in await _load_calls(session):
+        if call.call_id == call_id:
+            return {
+                **_call_to_dict(call),
+                "transcript_redacted": call.transcript_redacted,
+                "latency_stats": call.latency_stats,
+                "intelligence": call_intelligence(call),
+            }
+    raise HTTPException(status_code=404, detail="Call not found")
+
+
 @router.get("/analytics/summary")
 async def analytics_summary(
     product: str | None = None,
@@ -168,12 +188,29 @@ async def analytics_by_product(
     for call in await _load_calls(session):
         grouped[call.product].append(call)
 
-    return [
-        {
-            "product": product,
-            "call_count": len(grouped[product]),
-            "qualified_rate": _summary(grouped[product])["qualified_rate"],
-            "avg_duration": _summary(grouped[product])["avg_duration_s"],
-        }
-        for product in PRODUCTS
-    ]
+    rows: list[dict[str, Any]] = []
+    for product in PRODUCTS:
+        product_calls = grouped[product]
+        summary = _summary(product_calls)
+        ops = ops_summary(product_calls)
+        rows.append(
+            {
+                "product": product,
+                "call_count": len(product_calls),
+                "qualified_rate": summary["qualified_rate"],
+                "avg_duration": summary["avg_duration_s"],
+                "avg_lead_score": ops["avg_lead_score"],
+                "follow_up_queue": ops["follow_up_queue"],
+            }
+        )
+    return rows
+
+
+@router.get("/analytics/ops")
+async def analytics_ops(
+    product: str | None = None,
+    outcome: str | None = None,
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
+    calls = _filter_calls(await _load_calls(session), product=product, outcome=outcome)
+    return ops_summary(calls)

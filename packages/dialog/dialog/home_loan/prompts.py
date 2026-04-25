@@ -92,16 +92,23 @@ _SLOT_GUIDANCE: dict[str, str] = {
         "CRITICAL: If you see ANY number in the response, extract it as monthly_income_inr. Be aggressive - any number = income."
     ),
     "qualify_followup": (
-        "Extract: loan_purpose (string).\n\n"
+        "Extract: property_value_inr (integer), city (string), property_type (residential|commercial).\n\n"
         "EXAMPLES:\n"
-        "Customer: 'Home renovation' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
-        "Customer: 'For my house repairs' → {\"loan_purpose\": \"home_renovation\"}, intent: provide_value\n"
-        "Customer: 'Travel' → {\"loan_purpose\": \"travel\"}, intent: provide_value\n"
-        "Customer: 'Medical emergency' → {\"loan_purpose\": \"medical\"}, intent: provide_value\n"
-        "Customer: 'Education' → {\"loan_purpose\": \"education\"}, intent: provide_value\n"
-        "Customer: 'Business' → {\"loan_purpose\": \"business\"}, intent: provide_value\n"
-        "Customer: 'Personal use' → {\"loan_purpose\": \"other\"}, intent: provide_value\n\n"
-        "VALID VALUES: home_renovation, travel, medical, education, business, other. Map customer words to closest match."
+        "Customer: 'Pune mein flat dekh raha hoon, budget 80 lakh hai' → "
+        "{\"city\": \"Pune\", \"property_value_inr\": 8000000, \"property_type\": \"residential\"}, intent: provide_value\n"
+        "Customer: 'Mumbai, around 1.2 crore for an apartment' → "
+        "{\"city\": \"Mumbai\", \"property_value_inr\": 12000000, \"property_type\": \"residential\"}, intent: provide_value\n"
+        "Customer: 'Delhi mein commercial property, around 2 crore' → "
+        "{\"city\": \"Delhi\", \"property_value_inr\": 20000000, \"property_type\": \"commercial\"}, intent: provide_value\n"
+        "Customer: 'Bengaluru, 95 lakh' → "
+        "{\"city\": \"Bengaluru\", \"property_value_inr\": 9500000}, intent: provide_value\n"
+        "Customer: 'Location Gurgaon hai, budget abhi final nahi hai' → "
+        "{\"city\": \"Gurgaon\"}, intent: provide_value\n"
+        "Customer: 'Approx 70 lakh ka residential flat' → "
+        "{\"property_value_inr\": 7000000, \"property_type\": \"residential\"}, intent: provide_value\n\n"
+        "RULES: Extract any explicit city/location and any budget/property value you hear. "
+        "Convert lakh/crore values to INR integers. Use property_type only when the customer clearly says "
+        "residential/home/flat/apartment or commercial/shop/office."
     ),
     "consent": (
         "Extract: consent_given (bool).\n\n"
@@ -120,19 +127,39 @@ _SLOT_GUIDANCE: dict[str, str] = {
 # ── System prompt builder ─────────────────────────────────────────────────────
 
 _SYSTEM_TEMPLATE = """\
-You are {agent_name} from {lender_name}, conducting a home_loan outbound call.
+You are {agent_name} from {lender_name}, conducting a home loan outbound call.
 Customer name: {customer_name}
+Current conversation stage: {node_name}
 
-Your script for this turn (node: {node_name}):
+SCRIPT GUIDANCE (adapt naturally, don't repeat verbatim):
 {script_text}
 
 {slot_guidance}
 
-Respond ONLY with valid JSON matching this exact schema — no markdown, no preamble:
+CONVERSATION RULES:
+1. Listen carefully to what the customer actually says - BE RESPONSIVE, NOT SCRIPTED
+2. If customer gives a number (ANY number), extract it as the slot value
+3. If customer asks a question, ANSWER IT FIRST before continuing the script
+4. Acknowledge their responses naturally - use phrases like "Bilkul", "Samajh gaya", "Accha", "Bahut accha"
+5. Build rapport - use their name occasionally, sound friendly and helpful
+6. Keep responses conversational in Hinglish - max 40 words
+7. Don't ask the same question twice - if unclear, rephrase differently
+8. MIXED LANGUAGE IS NORMAL - Hindi/Urdu/English mixed - extract information anyway
+9. Add natural fillers: "Dekhiye", "Acha suniye", "Haan ji" to sound human
+10. If customer sounds frustrated, be empathetic: "Main samajhta hoon, tension mat lijiye"
+
+COMMON QUESTIONS & ANSWERS:
+Q: Interest rate kya hai? -> "Home loan pe 8.5% se shuru hota hai, property aur income ke basis pe adjust hoga"
+Q: EMI kitni hogi? -> "20 lakh ke loan pe approximately Rs 17,000 monthly EMI, 15 saal ke liye"
+Q: Documents kya chahiye? -> "Property papers, income proof, PAN card, Aadhaar. Simple process hai"
+Q: Processing fee? -> "0.5% processing fee hoti hai. Details SMS mein aayegi"
+Q: Kitne din mein milega? -> "Approval 5-7 working days, disbursement property documents verify hone ke baad"
+
+Respond ONLY with valid JSON matching this exact schema - no markdown, no preamble:
 {{
   "classified_intent": "affirm" | "deny" | "provide_value" | "unclear",
   "slots_extracted": {{ <slot_key>: <value> }},
-  "agent_turn_text": "<your response, strictly follow the script, max 30 words>"
+  "agent_turn_text": "<natural conversational response in Hinglish>"
 }}"""
 
 
@@ -142,17 +169,47 @@ def build_messages(
     customer_name: str,
     node_name: str,
     asr_text: str,
+    history: list[Any] | None = None,
+    retry_count: int = 0,
+    sentiment_guidance: str = "",
+    memory_context: str = "",
+    rag_context: str = "",
 ) -> list[dict[str, str]]:
     """Return the messages list to pass to the LLM for a single dialog turn."""
-    system = _SYSTEM_TEMPLATE.format(
+    script_text = _NODE_SCRIPTS[node_name]
+
+    system_parts = []
+    if sentiment_guidance:
+        system_parts.append(sentiment_guidance)
+    if rag_context:
+        system_parts.append(f"KNOWLEDGE BASE CONTEXT (Use for accurate product info):\n{rag_context}")
+    if memory_context:
+        system_parts.append(memory_context)
+
+    main_system = _SYSTEM_TEMPLATE.format(
         agent_name=agent_name,
         lender_name=lender_name,
         customer_name=customer_name,
         node_name=node_name,
-        script_text=_NODE_SCRIPTS[node_name],
+        script_text=script_text,
         slot_guidance=_SLOT_GUIDANCE[node_name],
     )
+    system_parts.append(main_system)
+
+    if retry_count > 0:
+        system_parts.append(f"\nNOTE: Retry attempt {retry_count + 1}. Customer may not have understood. Rephrase more clearly.")
+
+    system = "\n\n".join(system_parts)
     messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+
+    if history:
+        recent_history = history[-4:] if len(history) > 4 else history
+        for turn in recent_history:
+            role = "assistant" if (getattr(turn, "speaker", None) or turn.get("speaker", "")) == "agent" else "user"
+            text = getattr(turn, "text", None) or turn.get("text", "")
+            if text:
+                messages.append({"role": role, "content": str(text)})
+
     if asr_text:
         messages.append({"role": "user", "content": asr_text})
     return messages
@@ -161,8 +218,11 @@ def build_messages(
 def get_fallback_text(node_name: str, agent_name: str, lender_name: str, customer_name: str) -> str:
     """Return the raw YAML script text as a fallback when the LLM call fails."""
     template = _NODE_SCRIPTS[node_name]
-    return template.format(
-        agent_name=agent_name,
-        lender_name=lender_name,
-        customer_name=customer_name,
-    )
+    try:
+        return template.format(
+            agent_name=agent_name,
+            lender_name=lender_name,
+            customer_name=customer_name,
+        )
+    except KeyError:
+        return template

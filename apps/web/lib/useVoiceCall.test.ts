@@ -261,4 +261,42 @@ describe("useVoiceCall", () => {
     expect(result.current.status).toBe("error");
     expect(result.current.error).toBe("ASR_TIMEOUT: Groq Whisper did not respond");
   });
+
+  it("sends end_call without closing before call_ended arrives", async () => {
+    const { result } = renderHook(() =>
+      useVoiceCall({
+        apiBaseUrl: "http://localhost:8000",
+        callId: "test_call",
+        customerId: "test_customer",
+        product: "personal_loan",
+        language: "hi-IN",
+        agentName: "Agent",
+        lenderName: "Bank",
+        customerName: "Customer",
+      })
+    );
+
+    act(() => {
+      result.current.connect();
+    });
+    await waitFor(() => expect(mockWs.readyState).toBe(WebSocket.OPEN));
+
+    act(() => {
+      mockWs.simulateMessage(JSON.stringify({ type: "call_accepted" }));
+    });
+
+    act(() => {
+      result.current.endCall();
+    });
+
+    expect(mockWs.readyState).toBe(WebSocket.OPEN);
+    expect(
+      mockWs.sentMessages.some((message) => {
+        if (typeof message !== "string") {
+          return false;
+        }
+        return JSON.parse(message).type === "end_call";
+      })
+    ).toBe(true);
+  });
 });

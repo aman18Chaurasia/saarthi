@@ -9,18 +9,65 @@ Each node:
 
 The LLM callable is injected at graph-build time (see graph.py) so tests can
 substitute a mock without touching any network.
+
+TIER 1 ENHANCEMENTS:
+- Conversation memory with semantic retrieval
+- Sentiment analysis for adaptive responses
+- Smart retry with dynamic rephrasing
 """
 from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any, Callable, Awaitable
+from pathlib import Path
+import importlib.util
 
 from pydantic import ValidationError
+
+from dialog.slot_requirements import determine_outcome, followup_slot_captured, primary_slot_captured
 
 from .prompts import build_messages, get_fallback_text
 from .schema import StructuredAgentResponse
 from .state import DialogNode, DialogState, SlotSet, TurnRecord
+
+# ── Tier 1: Load enhanced modules ─────────────────────────────────────────────
+def _load_module(name: str, file_path: Path):
+    """Dynamically load a module from file path."""
+    try:
+        if not file_path.exists():
+            return None
+        spec = importlib.util.spec_from_file_location(name, file_path)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+    except Exception:
+        return None
+
+# Try to load Tier 1 modules
+# Path: packages/dialog/dialog/personal_loan/nodes.py
+# Target: packages/dialog/dialog/memory_manager.py
+_base_path = Path(__file__).parents[1]  # Go up to dialog/
+_memory_mod = _load_module('memory', _base_path / 'memory_manager.py')
+# Target: packages/voice/sentiment_analyzer.py
+_sentiment_mod = _load_module('sentiment', _base_path.parents[1] / 'voice' / 'sentiment_analyzer.py')
+
+# Initialize if available
+if _memory_mod:
+    ConversationMemory = _memory_mod.ConversationMemory
+    _conversation_memories: dict[str, Any] = {}
+else:
+    ConversationMemory = None
+    _conversation_memories = {}
+
+if _sentiment_mod:
+    SentimentAnalyzer = _sentiment_mod.SentimentAnalyzer
+    _sentiment_analyzer = SentimentAnalyzer()
+else:
+    SentimentAnalyzer = None
+    _sentiment_analyzer = None
 
 # Type alias for the injected LLM callable
 LLMCallable = Callable[
@@ -35,15 +82,77 @@ RAGCallable = Callable[[str, str | None, int], Awaitable[str]]  # query, product
 logger = logging.getLogger(__name__)
 
 
+# ── Tier 1: Memory & Sentiment helpers ───────────────────────────────────────
+
+def _get_memory(call_id: str):
+    """Get or create conversation memory for this call."""
+    if not ConversationMemory:
+        return None
+    if call_id not in _conversation_memories:
+        _conversation_memories[call_id] = ConversationMemory()
+    return _conversation_memories[call_id]
+
+
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
-def _build_messages(state: DialogState, node_name: str) -> list[dict[str, str]]:
+async def _build_messages(state: DialogState, node_name: str, rag_fn: RAGCallable | None = None) -> list[dict[str, str]]:
+    """Build messages with Tier 1 enhancements (memory + sentiment + RAG).
+
+    Falls back gracefully if modules unavailable.
+    """
+    # Tier 1: Analyze sentiment
+    sentiment_guidance = ""
+    if _sentiment_analyzer and state.asr_text:
+        try:
+            sentiment = await _sentiment_analyzer.analyze(state.asr_text)
+            sentiment_guidance = await _sentiment_analyzer.get_adaptive_response_guidance(sentiment)
+        except Exception as e:
+            logger.debug(f"Sentiment analysis failed: {e}")
+
+    # Phase 2: Retrieve RAG context if available
+    rag_context = ""
+    if rag_fn and state.asr_text:
+        try:
+            # Detect if user is asking a question (heuristic: contains "kya", "what", "how", "why", etc.)
+            question_words = ["kya", "what", "how", "why", "kitna", "kaun", "kis", "kab"]
+            is_question = any(word in state.asr_text.lower() for word in question_words)
+            
+            if is_question:
+                rag_context = await rag_fn(
+                    query=state.asr_text,
+                    product=state.product,
+                    top_k=3
+                )
+        except Exception as e:
+            logger.debug(f"RAG retrieval failed: {e}")
+
+    # Tier 1: Retrieve memory context
+    memory_context = ""
+    memory = _get_memory(state.call_id)
+    if memory and state.asr_text:
+        try:
+            memory_context = await memory.retrieve_relevant_context(
+                query=state.asr_text,
+                max_turns=3
+            )
+            facts = memory.get_key_facts_summary()
+            if facts:
+                memory_context += "\n\n" + facts
+        except Exception as e:
+            logger.debug(f"Memory retrieval failed: {e}")
+
+    # Build messages (with or without enhancements)
     return build_messages(
         agent_name=state.agent_name,
         lender_name=state.lender_name,
         customer_name=state.customer_name,
         node_name=node_name,
         asr_text=state.asr_text,
+        history=state.history,
+        retry_count=state.retry_count,
+        sentiment_guidance=sentiment_guidance,
+        memory_context=memory_context,
+        rag_context=rag_context,
     )
 
 
@@ -51,12 +160,13 @@ async def _call_llm(
     llm_fn: LLMCallable,
     state: DialogState,
     node_name: str,
+    rag_fn: RAGCallable | None = None,
 ) -> StructuredAgentResponse:
     """Call the LLM and return a validated StructuredAgentResponse.
 
     On any failure returns a fallback 'unclear' response without raising.
     """
-    messages = _build_messages(state, node_name)
+    messages = await _build_messages(state, node_name, rag_fn)
     try:
         resp = await llm_fn(messages, node_name, state.asr_text)
         # Re-validate in case the mock/LLM returns a raw dict
@@ -112,9 +222,9 @@ def _was_useful(resp: StructuredAgentResponse, updated_slots: SlotSet, node_name
     if node_name == "identity_confirm":
         return updated_slots.has_time is not None
     if node_name == "qualify":
-        return updated_slots.monthly_income_inr is not None
+        return primary_slot_captured(updated_slots)
     if node_name == "qualify_followup":
-        return updated_slots.loan_purpose is not None
+        return followup_slot_captured(updated_slots)
     if node_name == "consent":
         return updated_slots.consent_given is not None
     # opener, next_step, close — always considered useful (no retries)
@@ -128,11 +238,43 @@ def _update_slots(current: SlotSet, extracted: dict[str, Any]) -> SlotSet:
     return current.model_copy(update=safe) if safe else current
 
 
+_SENSITIVE_DETAIL_PATTERN = re.compile(
+    r"\b(?:\d[\s-]?){8,}\b|aadhaar|aadhar|pan|otp|cvv|pin|account|number|mobile|phone",
+    re.IGNORECASE,
+)
+_DENY_CONSENT_PATTERN = re.compile(
+    r"\b(?:no|nahi|nahin|mat|don't|do not|cannot|can't)\b.*\b(?:record|permission|consent|use|number)\b"
+    r"|\b(?:record|permission|consent|use|number)\b.*\b(?:nahi|nahin|mat|don't|do not|cannot|can't)\b",
+    re.IGNORECASE,
+)
+_EXPLICIT_CONSENT_PATTERN = re.compile(
+    r"\b(?:yes|haan|han|sure|okay|ok|consent|permission|allow|record kar sakte|kar sakte)\b",
+    re.IGNORECASE,
+)
+
+
+def _sensitive_detail_without_consent(text: str) -> bool:
+    if not text:
+        return False
+    if not _SENSITIVE_DETAIL_PATTERN.search(text):
+        return False
+    if _DENY_CONSENT_PATTERN.search(text):
+        return False
+    return not _EXPLICIT_CONSENT_PATTERN.search(text)
+
+
+def _consent_reprompt(state: DialogState) -> str:
+    return (
+        f"{state.customer_name} ji, main sensitive number note nahi kar sakta jab tak aap clear permission na dein. "
+        "Kya aap details record karne ki consent dete hain?"
+    )
+
+
 # ── Node functions ────────────────────────────────────────────────────────────
 
-async def opener_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
+async def opener_node(state: DialogState, llm_fn: LLMCallable, rag_fn: RAGCallable | None = None) -> DialogState:
     """Fires at call start — no customer input yet."""
-    resp = await _call_llm(llm_fn, state, "opener")
+    resp = await _call_llm(llm_fn, state, "opener", rag_fn)
     history, ti = _append_turns(state, "opener", resp.agent_turn_text, include_customer=False)
     return state.model_copy(update={
         "current_node": "opener",
@@ -142,11 +284,27 @@ async def opener_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
     })
 
 
-async def identity_confirm_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
-    resp = await _call_llm(llm_fn, state, "identity_confirm")
+async def identity_confirm_node(state: DialogState, llm_fn: LLMCallable, rag_fn: RAGCallable | None = None) -> DialogState:
+    # Tier 1: Track customer turn in memory
+    memory = _get_memory(state.call_id)
+    if memory and state.asr_text:
+        try:
+            await memory.add_turn("customer", state.asr_text, "identity_confirm", state.turn_index)
+        except Exception as e:
+            logger.debug(f"Memory tracking failed: {e}")
+
+    resp = await _call_llm(llm_fn, state, "identity_confirm", rag_fn)
     new_slots = _update_slots(state.slots, resp.slots_extracted)
     useful = _was_useful(resp, new_slots, "identity_confirm")
     history, ti = _append_turns(state, "identity_confirm", resp.agent_turn_text)
+
+    # Tier 1: Track agent turn in memory
+    if memory:
+        try:
+            await memory.add_turn("agent", resp.agent_turn_text, "identity_confirm", ti - 1)
+        except Exception as e:
+            logger.debug(f"Memory tracking failed: {e}")
+
     return state.model_copy(update={
         "current_node": "identity_confirm",
         "history": history,
@@ -156,11 +314,27 @@ async def identity_confirm_node(state: DialogState, llm_fn: LLMCallable) -> Dial
     })
 
 
-async def qualify_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
-    resp = await _call_llm(llm_fn, state, "qualify")
+async def qualify_node(state: DialogState, llm_fn: LLMCallable, rag_fn: RAGCallable | None = None) -> DialogState:
+    # Tier 1: Track in memory
+    memory = _get_memory(state.call_id)
+    if memory and state.asr_text:
+        try:
+            await memory.add_turn("customer", state.asr_text, "qualify", state.turn_index)
+        except Exception:
+            pass
+
+    resp = await _call_llm(llm_fn, state, "qualify", rag_fn)
     new_slots = _update_slots(state.slots, resp.slots_extracted)
     useful = _was_useful(resp, new_slots, "qualify")
     history, ti = _append_turns(state, "qualify", resp.agent_turn_text)
+
+    # Track agent turn
+    if memory:
+        try:
+            await memory.add_turn("agent", resp.agent_turn_text, "qualify", ti - 1)
+        except Exception:
+            pass
+
     return state.model_copy(update={
         "current_node": "qualify",
         "history": history,
@@ -182,8 +356,18 @@ async def qualify_followup_node(
     - After extracting slots, checks eligibility if eligibility_fn is provided
     - If ineligible, sets outcome="not_qualified" to route to close node
     - RAG context can be fetched and passed to LLM (future enhancement)
+
+    Tier 1: Memory tracking enabled
     """
-    resp = await _call_llm(llm_fn, state, "qualify_followup")
+    # Tier 1: Track in memory
+    memory = _get_memory(state.call_id)
+    if memory and state.asr_text:
+        try:
+            await memory.add_turn("customer", state.asr_text, "qualify_followup", state.turn_index)
+        except Exception:
+            pass
+
+    resp = await _call_llm(llm_fn, state, "qualify_followup", rag_fn)
     new_slots = _update_slots(state.slots, resp.slots_extracted)
     useful = _was_useful(resp, new_slots, "qualify_followup")
 
@@ -204,6 +388,14 @@ async def qualify_followup_node(
             logger.warning(f"Eligibility check error: {e}. Continuing without rejection.")
 
     history, ti = _append_turns(state, "qualify_followup", resp.agent_turn_text)
+
+    # Track agent turn
+    if memory:
+        try:
+            await memory.add_turn("agent", resp.agent_turn_text, "qualify_followup", ti - 1)
+        except Exception:
+            pass
+
     return state.model_copy(update={
         "current_node": "qualify_followup",
         "history": history,
@@ -213,11 +405,31 @@ async def qualify_followup_node(
     })
 
 
-async def consent_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
-    resp = await _call_llm(llm_fn, state, "consent")
+async def consent_node(state: DialogState, llm_fn: LLMCallable, rag_fn: RAGCallable | None = None) -> DialogState:
+    # Tier 1: Track in memory
+    memory = _get_memory(state.call_id)
+    if memory and state.asr_text:
+        try:
+            await memory.add_turn("customer", state.asr_text, "consent", state.turn_index)
+        except Exception:
+            pass
+
+    resp = await _call_llm(llm_fn, state, "consent", rag_fn)
     new_slots = _update_slots(state.slots, resp.slots_extracted)
+    agent_text = resp.agent_turn_text
+    if new_slots.consent_given is True and _sensitive_detail_without_consent(state.asr_text):
+        new_slots = state.slots.model_copy(update={"consent_given": None})
+        agent_text = _consent_reprompt(state)
     useful = _was_useful(resp, new_slots, "consent")
-    history, ti = _append_turns(state, "consent", resp.agent_turn_text)
+    history, ti = _append_turns(state, "consent", agent_text)
+
+    # Track agent turn
+    if memory:
+        try:
+            await memory.add_turn("agent", agent_text, "consent", ti - 1)
+        except Exception:
+            pass
+
     return state.model_copy(update={
         "current_node": "consent",
         "history": history,
@@ -227,8 +439,8 @@ async def consent_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
     })
 
 
-async def next_step_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
-    resp = await _call_llm(llm_fn, state, "next_step")
+async def next_step_node(state: DialogState, llm_fn: LLMCallable, rag_fn: RAGCallable | None = None) -> DialogState:
+    resp = await _call_llm(llm_fn, state, "next_step", rag_fn)
     history, ti = _append_turns(state, "next_step", resp.agent_turn_text, include_customer=False)
     return state.model_copy(update={
         "current_node": "next_step",
@@ -239,18 +451,11 @@ async def next_step_node(state: DialogState, llm_fn: LLMCallable) -> DialogState
 
 
 def _determine_outcome(state: DialogState) -> str:
-    s = state.slots
-    if s.consent_given is True and s.monthly_income_inr is not None:
-        return "qualified"
-    if s.consent_given is False:
-        return "no_consent"
-    if s.has_time is False:
-        return "dropped"
-    return "dropped"
+    return determine_outcome(state.slots, product=state.product)
 
 
-async def close_node(state: DialogState, llm_fn: LLMCallable) -> DialogState:
-    resp = await _call_llm(llm_fn, state, "close")
+async def close_node(state: DialogState, llm_fn: LLMCallable, rag_fn: RAGCallable | None = None) -> DialogState:
+    resp = await _call_llm(llm_fn, state, "close", rag_fn)
     outcome = _determine_outcome(state)
     new_slots = state.slots.model_copy(update={"outcome": outcome})
     history, ti = _append_turns(state, "close", resp.agent_turn_text, include_customer=False)
