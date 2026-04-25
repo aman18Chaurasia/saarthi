@@ -3,7 +3,7 @@
 import { AudioCapture } from "@/lib/audio-capture";
 import { AudioPlayback } from "@/lib/audio-playback";
 import { useVoiceCall } from "@/lib/useVoiceCall";
-import { ArrowLeft, Globe, Phone, PhoneOff, Mic, MicOff, Volume2, Send } from "lucide-react";
+import { ArrowLeft, Globe, Phone, PhoneOff, Mic, MicOff, Volume2, Send, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -73,6 +73,10 @@ export default function CallPage() {
 	const [customerPhone, setCustomerPhone] = useState("");
 	const [realCallStatus, setRealCallStatus] = useState<RealCallStatus>("idle");
 	const [realCallMessage, setRealCallMessage] = useState("");
+	const [copiedCallId, setCopiedCallId] = useState(false);
+	const [customerName, setCustomerName] = useState(
+		typeof window !== "undefined" ? localStorage.getItem("customerName") || "" : ""
+	);
 	const audioCaptureRef = useRef<AudioCapture | null>(null);
 	const audioPlaybackRef = useRef<AudioPlayback | null>(null);
 	const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -87,7 +91,7 @@ export default function CallPage() {
 		language: selectedLanguage,
 		agentName: "Priya",
 		lenderName: "Demo Bank",
-		customerName: "Rahul",
+		customerName: customerName || "Guest",
 		onAudioFrame: (pcm) => {
 			audioPlaybackRef.current?.enqueue(pcm);
 		},
@@ -110,6 +114,10 @@ export default function CallPage() {
 			capture
 				.start()
 				.catch((err) => console.error("AudioCapture start error:", err));
+
+			playback
+				.start()
+				.catch((err) => console.error("AudioPlayback start error:", err));
 		}
 
 		if (voiceCall.status === "ended") {
@@ -132,6 +140,16 @@ export default function CallPage() {
 		if (contactInput.trim()) {
 			voiceCall.sendText(contactInput.trim());
 			setContactInput("");
+		}
+	};
+
+	const handleCopyCallId = async () => {
+		try {
+			await navigator.clipboard.writeText(callId);
+			setCopiedCallId(true);
+			setTimeout(() => setCopiedCallId(false), 2000);
+		} catch (err) {
+			console.error("Failed to copy:", err);
 		}
 	};
 
@@ -272,6 +290,36 @@ export default function CallPage() {
 				<div className="grid lg:grid-cols-3 gap-6">
 					{/* Left Column - Call Controls & Info */}
 					<div className="lg:col-span-1 space-y-6">
+						{/* Call ID Display - Prominent */}
+						{voiceCall.status === "active" && (
+							<div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+								<div className="flex items-center justify-between gap-3">
+									<div>
+										<p className="text-xs text-blue-400 font-semibold uppercase tracking-wide mb-1">
+											Call ID for Supervisor Monitor
+										</p>
+										<p className="text-white font-mono text-sm">{callId}</p>
+									</div>
+									<button
+										onClick={handleCopyCallId}
+										className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition flex items-center gap-2"
+									>
+										{copiedCallId ? (
+											<>
+												<Check className="w-4 h-4" />
+												Copied!
+											</>
+										) : (
+											<>
+												<Copy className="w-4 h-4" />
+												Copy
+											</>
+										)}
+									</button>
+								</div>
+							</div>
+						)}
+
 						{/* Call Control Card */}
 						<div className="p-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl">
 							{voiceCall.status === "idle" && (
@@ -408,7 +456,9 @@ export default function CallPage() {
 									</div>
 									<div className="flex justify-between">
 										<span className="text-slate-500">Customer</span>
-										<span className="text-white font-medium">Rahul</span>
+										<span className="text-white font-medium">
+											{customerName || "Guest"}
+										</span>
 									</div>
 									<div className="flex justify-between">
 										<span className="text-slate-500">Language</span>

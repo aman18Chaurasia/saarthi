@@ -7,10 +7,15 @@ export class AudioPlayback {
   private queue: ArrayBuffer[] = [];
   private isPlaying = false;
   private nextStartTime = 0;
+  private sampleRate: number;
+
+  constructor(sampleRate: number = 16000) {
+    this.sampleRate = sampleRate;
+  }
 
   async start(): Promise<void> {
     if (this.audioContext) return;
-    this.audioContext = new AudioContext({ sampleRate: 16000 });
+    this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
     this.nextStartTime = this.audioContext.currentTime;
   }
 
@@ -36,7 +41,7 @@ export class AudioPlayback {
 
     const pcm = this.queue.shift()!;
     const samples = pcm.byteLength / 2;
-    const audioBuffer = this.audioContext.createBuffer(1, samples, 16000);
+    const audioBuffer = this.audioContext.createBuffer(1, samples, this.sampleRate);
     const channelData = audioBuffer.getChannelData(0);
 
     // Convert int16 to float32

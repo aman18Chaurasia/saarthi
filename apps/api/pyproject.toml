@@ -26,11 +26,14 @@ dependencies = [
     "saarthi-eligibility",
     "saarthi-rag",
     "saarthi-scripts",
+    "saarthi-dialog",
     "asyncpg>=0.31.0",
     "setuptools<81",
     "neo4j>=5.20",
     "qdrant-client>=1.9",
     "pypdf>=4.0",
+    "twilio>=9.0",
+    "azure-cognitiveservices-speech>=1.49.1",
 ]
 
 [project.optional-dependencies]
@@ -53,3 +56,4 @@ saarthi-guardrail = { workspace = true }
 saarthi-eligibility = { workspace = true }
 saarthi-rag = { workspace = true }
 saarthi-scripts = { workspace = true }
+saarthi-dialog = { workspace = true }
