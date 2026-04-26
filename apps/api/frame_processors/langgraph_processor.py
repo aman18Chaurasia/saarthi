@@ -283,11 +283,13 @@ class LangGraphProcessor(FrameProcessor):
         app: Any,
         config: dict[str, Any],
         closed_rag_fn: RAGCallable | None = None,
+        db_session: Any | None = None,
     ) -> None:
         super().__init__()
         self._app = app
         self._config = config
         self._closed_rag_fn = closed_rag_fn
+        self._db_session = db_session
 
     async def _auto_advance(self) -> list[tuple[dict[str, Any], float]]:
         generated: list[tuple[dict[str, Any], float]] = []
@@ -362,6 +364,22 @@ class LangGraphProcessor(FrameProcessor):
                 asr_text = redact_str(asr_text)
         except Exception as e:
             logger.debug(f"Compliance check failed (continuing): {e}")
+
+        # Generate nudge from customer speech
+        if self._db_session:
+            try:
+                from ..nudge_generator import generate_nudge
+                call_id = self._config.get("configurable", {}).get("thread_id", "unknown")
+                product = current_state.values.get("product", "personal_loan")
+                await generate_nudge(
+                    session=self._db_session,
+                    call_id=call_id,
+                    product=product,
+                    transcript_chunk=asr_text,
+                    speaker="customer",
+                )
+            except Exception as e:
+                logger.debug(f"Nudge generation failed (continuing): {e}")
 
         t0 = time.perf_counter_ns()
 

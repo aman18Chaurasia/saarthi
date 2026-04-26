@@ -97,6 +97,7 @@ def build_pipeline(
     llm_fn: Callable[..., Awaitable[Any]] | None = None,
     tts_provider: object | None = None,
     vad_impl: object | None = None,
+    db_session: Any | None = None,
 ) -> tuple[Pipeline, Any, dict[str, Any]]:
     """Build a per-call Pipecat pipeline with all processors wired.
 
@@ -188,7 +189,7 @@ def build_pipeline(
     # Processor chain
     vad = VADProcessor(vad_impl=vad_impl)
     asr = ASRProcessor(transcribe_fn=transcribe_fn, user_id=call_id)
-    langgraph = LangGraphProcessor(app=app, config=graph_config)
+    langgraph = LangGraphProcessor(app=app, config=graph_config, db_session=db_session)
     tts = TTSProcessor(tts_provider=tts_provider, language=language)
 
     pipeline = Pipeline([vad, asr, langgraph, tts])

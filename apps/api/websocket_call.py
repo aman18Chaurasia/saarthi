@@ -162,7 +162,7 @@ class CallRuntime(Protocol):
 class PipecatCallRuntime:
     """Runtime adapter between the WebSocket endpoint and Pipecat PipelineTask."""
 
-    def __init__(self, initial_state: DialogState) -> None:
+    def __init__(self, initial_state: DialogState, db_session: Any | None = None) -> None:
         self._initial_state = initial_state
         self._outgoing: asyncio.Queue[Frame] = asyncio.Queue()
         self._runner_task: asyncio.Task[None] | None = None
@@ -170,6 +170,7 @@ class PipecatCallRuntime:
         self._graph_app: Any | None = None
         self._graph_config: dict[str, Any] | None = None
         self._language = "en-IN"
+        self._db_session = db_session
 
     def set_language(self, language: str | None) -> None:
         if language:
@@ -180,6 +181,7 @@ class PipecatCallRuntime:
             self._initial_state.call_id,
             self._initial_state,
             language=self._language,
+            db_session=self._db_session,
         )
         self._graph_app = graph_app
         self._graph_config = graph_config
@@ -680,6 +682,7 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
 
     runtime: CallRuntime | None = None
     sender_task: asyncio.Task[None] | None = None
+    db_session: Any | None = None
     state = WebSocketTurnState()
     started_payload: StartCallPayload | None = None
     final_status = "dropped"
@@ -702,7 +705,10 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
 
         await _create_call_record(started_payload, state)
 
-        runtime = _runtime_factory(websocket)(_initial_state_from_start(started_payload))
+        # Create DB session for nudge generation
+        db_session = AsyncSessionLocal()
+
+        runtime = _runtime_factory(websocket)(_initial_state_from_start(started_payload), db_session=db_session)
         if hasattr(runtime, "set_language"):
             runtime.set_language(started_payload.language)
         await runtime.start()
@@ -832,6 +838,8 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
             await asyncio.gather(sender_task, return_exceptions=True)
         if runtime is not None and (started_payload is None or started_payload.call_id == call_id):
             await runtime.close()
+        if db_session is not None:
+            await db_session.close()
         await _finalize_call_record(
             started_payload,
             state,

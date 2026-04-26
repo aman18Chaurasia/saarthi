@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 
 from .chunker import semantic_chunk
 from .embedder import embed_batch
+from .hybrid_search import compute_bm25_sparse_vector
 
 load_dotenv()
 
@@ -87,7 +88,7 @@ async def ingest_documents():
 
     print(f"\nTotal chunks to embed: {len(all_chunks)}")
 
-    # Embed in batches
+    # Embed in batches (dense vectors)
     batch_size = 10
     all_embeddings = []
 
@@ -97,17 +98,28 @@ async def ingest_documents():
         all_embeddings.extend(embeddings)
         print(f"Embedded batch {i//batch_size + 1}/{(len(all_chunks) + batch_size - 1)//batch_size}")
 
-    # Upload to Qdrant
+    # Compute BM25 sparse vectors for hybrid search
+    print("\nComputing BM25 sparse vectors...")
+    all_sparse_vectors = []
+    for chunk in all_chunks:
+        sparse_vec = compute_bm25_sparse_vector(chunk)
+        all_sparse_vectors.append(sparse_vec)
+    print(f"Computed {len(all_sparse_vectors)} sparse vectors")
+
+    # Upload to Qdrant (with sparse vectors for hybrid search)
     points = [
         PointStruct(
             id=idx,
             vector=emb,
             payload={
                 "text": chunk,
+                "sparse_vector": sparse_vec,  # Store for future hybrid search
                 **metadata
             }
         )
-        for idx, (chunk, emb, metadata) in enumerate(zip(all_chunks, all_embeddings, chunk_metadata))
+        for idx, (chunk, emb, sparse_vec, metadata) in enumerate(
+            zip(all_chunks, all_embeddings, all_sparse_vectors, chunk_metadata)
+        )
     ]
 
     client.upsert(collection_name=collection_name, points=points)

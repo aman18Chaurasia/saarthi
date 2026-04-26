@@ -3,6 +3,7 @@
 import { AudioCapture } from "@/lib/audio-capture";
 import { AudioPlayback } from "@/lib/audio-playback";
 import { useVoiceCall } from "@/lib/useVoiceCall";
+import { NudgePanel } from "@/components/NudgePanel";
 import { ArrowLeft, Globe, Phone, PhoneOff, Mic, MicOff, Volume2, Send, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -469,6 +470,14 @@ export default function CallPage() {
 								</div>
 							</div>
 						)}
+n							{/* Nudge Panel - Active Call */}
+							{voiceCall.status === "active" && (
+								<NudgePanel
+									callId={callId}
+									product={product}
+									apiBaseUrl={API_BASE_URL}
+								/>
+							)}
 					</div>
 
 					{/* Right Column - Transcript */}

@@ -12,6 +12,7 @@ load_dotenv(_env_path)
 
 from .routes.analytics import router as analytics_router  # noqa: E402
 from .routes.engagement import router as engagement_router  # noqa: E402
+from .routes.nudges import router as nudges_router  # noqa: E402
 from .websocket_call import router as websocket_router  # noqa: E402
 
 
@@ -37,6 +38,7 @@ app.add_middleware(
 app.include_router(websocket_router)
 app.include_router(analytics_router, prefix="/api")
 app.include_router(engagement_router, prefix="/api")
+app.include_router(nudges_router, prefix="/api")
 
 
 @app.on_event("startup")
