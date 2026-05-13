@@ -48,10 +48,13 @@ make setup
 # 3. Start backing services (Postgres, Redis, Qdrant, Neo4j, MinIO)
 make up
 
-# 4. Start the API (http://localhost:8000)
+# 4. Run database migrations to create tables
+make migrate
+
+# 5. Start the API (http://localhost:8000)
 make api
 
-# 5. In a second terminal — start the dashboard (http://localhost:3000)
+# 6. In a second terminal — start the dashboard (http://localhost:3000)
 make web
 ```
 
@@ -67,6 +70,9 @@ make web
 | `make setup` | `uv sync` + spaCy model download + `pnpm install` |
 | `make up` | Start all Docker services |
 | `make down` | Stop all Docker services |
+| `make migrate` | Run database migrations (Alembic) |
+| `make seed` | Populate database with test call data |
+| `make seed-clear` | Clear all calls from database |
 | `make api` | Run FastAPI dev server on `:8000` |
 | `make web` | Run Next.js dev server on `:3000` |
 | `make test` | `pytest -q` + `vitest` |

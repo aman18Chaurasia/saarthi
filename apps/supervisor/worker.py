@@ -14,7 +14,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import redis.asyncio as redis
 
-from services.nudge_sidecar import NudgeSidecarPipeline, TranscriptChunk
+from .services.nudge_sidecar import NudgeSidecarPipeline, TranscriptChunk
 
 # Load .env from repo root
 repo_root = Path(__file__).parents[2]

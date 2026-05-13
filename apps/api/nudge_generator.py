@@ -1,15 +1,31 @@
 """RAG-based real-time nudge generation from customer transcript chunks."""
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
+import time
 from typing import Any
 
+import redis.asyncio as redis
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .models.nudge import Nudge
 
 logger = logging.getLogger(__name__)
+
+# Redis singleton for nudge publishing
+_redis_client: redis.Redis | None = None
+
+
+async def _get_redis_client() -> redis.Redis:
+    """Get or create Redis client."""
+    global _redis_client
+    if _redis_client is None:
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        _redis_client = await redis.from_url(redis_url)
+    return _redis_client
 
 
 def _extract_question_keywords(text: str) -> list[str]:
@@ -240,5 +256,28 @@ async def generate_nudge(
         f"Generated RAG-based nudge {nudge.id} for call {call_id}: "
         f"{title} (confidence={confidence:.2f}, route={route})"
     )
+
+    # Publish nudge to Redis for supervisor monitoring
+    try:
+        redis_client = await _get_redis_client()
+        # Map priority string to numeric value for UI
+        priority_num_map = {"high": 1, "medium": 2, "low": 3}
+        priority_num = priority_num_map.get(priority, 2)
+
+        message = json.dumps({
+            "type": "nudge",
+            "nudge_id": str(nudge.id),
+            "route": route,
+            "title": title,
+            "suggestion": suggestion,
+            "priority": priority_num,
+            "confidence": confidence,
+            "transcript": transcript_chunk,
+            "timestamp": time.time(),
+        })
+        await redis_client.publish(f"supervisor:{call_id}:nudges", message)
+        logger.debug(f"Published nudge {nudge.id} to Redis channel supervisor:{call_id}:nudges")
+    except Exception as e:
+        logger.warning(f"Failed to publish nudge to Redis: {e}")
 
     return nudge

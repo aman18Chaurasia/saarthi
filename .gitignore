@@ -34,6 +34,11 @@ node_modules/
 .env.local
 .env.*.local
 
+# ── Credentials ───────────────────────────────────────────
+*-credentials.json
+*service-account*.json
+chirp*.json
+
 # ── Audio artifacts ───────────────────────────────────────
 recordings/*.wav
 recordings/*.mp3

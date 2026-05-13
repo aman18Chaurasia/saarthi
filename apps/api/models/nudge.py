@@ -34,7 +34,7 @@ class NudgeTemplate(SQLModel, table=True):
     confidence_threshold: float = 0.7
 
     # Metadata for routing/classification
-    metadata: dict[str, str] = Field(
+    meta_info: dict[str, str] = Field(
         default={},
         sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
     )

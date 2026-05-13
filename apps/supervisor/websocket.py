@@ -183,9 +183,9 @@ async def _transcribe_audio(audio_pcm: bytes) -> str:
 
 @router.websocket("/monitored/{call_id}")
 async def monitored_call(websocket: WebSocket, call_id: str):
-    """Real-time monitored call with Azure Speech diarization.
+    """Real-time monitored call with Google Chirp-3 diarization.
 
-    Receives audio from browser → Azure transcription → nudge pipeline → sends back
+    Receives audio from browser → Chirp-3 transcription → nudge pipeline → sends back
     transcript + nudges.
 
     Audio format: PCM int16 mono 16kHz
@@ -206,10 +206,10 @@ async def monitored_call(websocket: WebSocket, call_id: str):
     nudge_task = None
 
     try:
-        # Lazy import Azure Speech
-        from .azure_speech import AzureSpeechDiarizer, TranscriptSegment
+        # Lazy import Google Chirp-3 Speech
+        from .chirp_speech import ChirpSpeechDiarizer, TranscriptSegment
 
-        diarizer = AzureSpeechDiarizer()
+        diarizer = ChirpSpeechDiarizer()
         result_queue: asyncio.Queue = asyncio.Queue()
 
         async def process_segments():

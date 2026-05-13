@@ -1,9 +1,10 @@
 """TTS frame processor: streams ElevenLabs audio on TextFrame.
 
 On TextFrame:
-  1. Call ElevenLabsProvider.stream(text)
-  2. Emit AudioRawFrame for each PCM chunk
-  3. Emit LatencyFrame(hop="tts", duration_ms=first_byte_ms)
+  1. Apply sentiment-adaptive prosody (SSML wrapping if supported)
+  2. Call ElevenLabsProvider.stream(text)
+  3. Emit AudioRawFrame for each PCM chunk
+  4. Emit LatencyFrame(hop="tts", duration_ms=first_byte_ms)
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from pipecat.frames.frames import ErrorFrame, Frame, TTSAudioRawFrame, TextFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 from ..frames import LatencyFrame
+from ..sentiment_analyzer import wrap_with_ssml
 
 _TTS_SAMPLE_RATE = 16000  # pcm_16000
 _TTS_CHANNELS = 1
@@ -52,6 +54,20 @@ class TTSProcessor(FrameProcessor):
         first_byte = True
         tts_first_byte_ms: float = 0.0
 
+        # Extract sentiment from frame metadata
+        sentiment = frame.metadata.get("customer_sentiment", "neutral")
+
+        # Apply sentiment-adaptive prosody (SSML)
+        text_to_synthesize = frame.text
+        if sentiment != "neutral":
+            # Check if provider supports SSML
+            provider_name = type(self._provider).__name__.lower()
+            supports_ssml = "elevenlabs" in provider_name or "azure" in provider_name or "google" in provider_name
+
+            if supports_ssml:
+                text_to_synthesize = wrap_with_ssml(frame.text, sentiment)
+                logger.debug(f"Applied {sentiment} prosody to TTS")
+
         kwargs: dict[str, object] = {}
         stream_fn = getattr(self._provider, "stream", None)
         stream_params = inspect.signature(stream_fn).parameters if stream_fn else {}
@@ -63,7 +79,7 @@ class TTSProcessor(FrameProcessor):
         await self.push_frame(frame, direction)
 
         try:
-            async for chunk in self._provider.stream(frame.text, **kwargs):  # type: ignore[attr-defined]
+            async for chunk in self._provider.stream(text_to_synthesize, **kwargs):  # type: ignore[attr-defined]
                 if first_byte:
                     tts_first_byte_ms = (time.perf_counter_ns() - t0) / 1_000_000
                     first_byte = False

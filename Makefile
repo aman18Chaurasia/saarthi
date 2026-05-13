@@ -1,4 +1,4 @@
-.PHONY: up down api web test lint setup seed seed-clear
+.PHONY: up down migrate api web test lint setup seed seed-clear
 
 COMPOSE = docker compose -f infra/docker-compose.yml
 
@@ -14,6 +14,10 @@ up:
 ## down: stop all backing services
 down:
 	$(COMPOSE) down
+
+## migrate: run database migrations
+migrate:
+	cd apps/api && uv run alembic upgrade head
 
 ## api: run FastAPI dev server on :8000
 api:

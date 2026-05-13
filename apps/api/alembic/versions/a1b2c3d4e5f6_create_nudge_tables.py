@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.Column("enabled", sa.Boolean(), nullable=False),
         sa.Column("confidence_threshold", sa.Float(), nullable=False),
         sa.Column(
-            "metadata",
+            "meta_info",
             postgresql.JSONB(astext_type=sa.Text()),
             server_default=sa.text("'{}'::jsonb"),
             nullable=False,

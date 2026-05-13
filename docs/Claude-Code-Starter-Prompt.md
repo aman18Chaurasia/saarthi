@@ -95,6 +95,8 @@ Scaffold the monorepo exactly per the repo layout in CLAUDE.md. Specifically:
 4. Add a Makefile (or justfile if you prefer) with targets:
      make up        # docker compose up -d
      make down
+     make migrate   # alembic upgrade head
+     make seed      # populate test data
      make api       # uvicorn reload
      make web       # pnpm dev
      make test      # pytest + vitest
@@ -266,8 +268,8 @@ Final polish and submission artifacts:
    evaluation tables, compliance story, limitations, future work.
 4. Finalize README.md with:
    - 30-second pitch.
-   - Quickstart: git clone → cp .env.example .env → make up → make api →
-     make web → open localhost:3000.
+   - Quickstart: git clone → cp .env.example .env → make up → make migrate →
+     make api → make web → open localhost:3000.
    - Rubric mapping table (which file/section maps to which rubric item).
 5. Run a full cleanup pass: unused deps, TODOs, stale comments, passing CI.
 6. Tag v1.0.0 and produce a GitHub Release with built artifacts.

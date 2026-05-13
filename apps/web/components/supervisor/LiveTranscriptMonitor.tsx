@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Radio, StopCircle, AlertTriangle } from "lucide-react";
 
@@ -28,6 +28,10 @@ export function LiveTranscriptMonitor() {
   const [nudges, setNudges] = useState<Nudge[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [userScrolled, setUserScrolled] = useState(false);
+
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
 
   const startMonitoring = () => {
     if (!callId.trim()) {
@@ -38,6 +42,7 @@ export function LiveTranscriptMonitor() {
     setError(null);
     setTranscript([]);
     setNudges([]);
+    setUserScrolled(false);
 
     const apiUrl = process.env.NEXT_PUBLIC_SUPERVISOR_URL || "http://localhost:8001";
     const wsUrl = apiUrl.replace(/^http/, "ws");
@@ -93,6 +98,32 @@ export function LiveTranscriptMonitor() {
     };
   }, [ws]);
 
+  // Auto-scroll to bottom when new transcript arrives (unless user scrolled up)
+  useEffect(() => {
+    if (!userScrolled && transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "auto", block: "end" });
+    }
+  }, [transcript, userScrolled]);
+
+  // Detect user scroll
+  const handleScroll = () => {
+    if (!transcriptContainerRef.current) return;
+
+    const container = transcriptContainerRef.current;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const isAtBottom = distanceFromBottom < 100; // 100px threshold
+
+    setUserScrolled(!isAtBottom);
+  };
+
+  // Jump to bottom button
+  const scrollToBottom = () => {
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      setUserScrolled(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Controls */}
@@ -147,14 +178,28 @@ export function LiveTranscriptMonitor() {
       {isMonitoring && (
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Left: Transcript */}
-          <div className="border border-slate-200 rounded-lg bg-white shadow-sm flex flex-col h-[700px]">
+          <div className="border border-slate-200 rounded-lg bg-white shadow-sm flex flex-col h-[700px] relative">
             <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex-shrink-0">
               <h2 className="text-lg font-semibold text-slate-900">Live Transcript</h2>
               <p className="text-xs text-slate-500 mt-1">
                 Real-time speaker-separated transcription
               </p>
             </div>
-            <div className="p-6 space-y-3 overflow-y-auto flex-1">
+
+            {/* Jump to bottom button - shows when user scrolled up */}
+            {userScrolled && (
+              <button
+                onClick={scrollToBottom}
+                className="absolute bottom-4 right-4 z-10 px-4 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm font-medium"
+              >
+                ↓ Jump to latest
+              </button>
+            )}
+            <div
+              ref={transcriptContainerRef}
+              onScroll={handleScroll}
+              className="p-6 space-y-3 overflow-y-auto flex-1"
+            >
               {transcript.length === 0 && (
                 <div className="h-full flex items-center justify-center">
                   <p className="text-slate-400 text-sm">Waiting for transcript...</p>
@@ -180,6 +225,7 @@ export function LiveTranscriptMonitor() {
                   <p className="text-sm text-slate-900 leading-relaxed">{turn.text}</p>
                 </div>
               ))}
+              <div ref={transcriptEndRef} />
             </div>
           </div>
 

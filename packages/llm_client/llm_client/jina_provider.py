@@ -12,15 +12,15 @@ class JinaEmbedProvider(BaseEmbedProvider):
         self._api_key = os.environ["JINA_API_KEY"]
         self._model = os.environ.get("JINA_EMBED_MODEL", "jina-embeddings-v3")
 
-    async def embed(self, text: str) -> list[float]:
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Batch embed multiple texts."""
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 self._URL,
                 headers={"Authorization": f"Bearer {self._api_key}"},
-                json={"input": [text], "model": self._model},
+                json={"input": texts, "model": self._model},
             )
             resp.raise_for_status()
             data: list[dict[str, object]] = resp.json()["data"]
-            embedding = data[0]["embedding"]
-            assert isinstance(embedding, list)
-            return embedding  # type: ignore[return-value]
+            embeddings = [item["embedding"] for item in data]  # type: ignore[misc]
+            return embeddings  # type: ignore[return-value]

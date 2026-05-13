@@ -707,6 +707,8 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
 
         # Create DB session for nudge generation
         db_session = AsyncSessionLocal()
+        # Initialize session context manually (stays open for entire call lifecycle)
+        await db_session.__aenter__()
 
         runtime = _runtime_factory(websocket)(_initial_state_from_start(started_payload), db_session=db_session)
         if hasattr(runtime, "set_language"):
@@ -839,7 +841,8 @@ async def call_websocket(websocket: WebSocket, call_id: str) -> None:
         if runtime is not None and (started_payload is None or started_payload.call_id == call_id):
             await runtime.close()
         if db_session is not None:
-            await db_session.close()
+            # Exit session context properly (matches __aenter__ call)
+            await db_session.__aexit__(None, None, None)
         await _finalize_call_record(
             started_payload,
             state,

@@ -2,24 +2,30 @@
 
 On TranscriptionFrame:
   1. Check compliance on customer input (PII detection + redaction)
-  2. update_state(config, {"asr_text": text})
-  3. ainvoke(None, config) -> new state dict
-  4. Extract last agent TurnRecord from history
-  5. Agent-output compliance guard (pre-TTS)
-  6. Emit TextFrame(text=agent_turn_text) + LatencyFrame(hop="llm")
+  2. Analyze customer sentiment
+  3. update_state(config, {"asr_text": text})
+  4. ainvoke(None, config) -> new state dict
+  5. Extract last agent TurnRecord from history
+  6. Agent-output compliance guard (pre-TTS)
+  7. Emit TextFrame(text=agent_turn_text, sentiment=...) + LatencyFrame(hop="llm")
 """
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+import redis.asyncio as redis
+
 from pipecat.frames.frames import Frame, TextFrame, TranscriptionFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 from ..frames import LatencyFrame
+from ..sentiment_analyzer import analyze_sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -291,6 +297,15 @@ class LangGraphProcessor(FrameProcessor):
         self._closed_rag_fn = closed_rag_fn
         self._db_session = db_session
 
+        # Redis for supervisor monitoring
+        self._redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self._redis_client: redis.Redis | None = None
+        self._call_id = config.get("configurable", {}).get("thread_id", "unknown")
+
+        # Sentiment tracking for adaptive prosody
+        self._customer_history: list[str] = []
+        self._current_sentiment = "neutral"
+
     async def _auto_advance(self) -> list[tuple[dict[str, Any], float]]:
         generated: list[tuple[dict[str, Any], float]] = []
 
@@ -334,9 +349,16 @@ class LangGraphProcessor(FrameProcessor):
                 self._closed_rag_fn,
             )
             if answer:
+                # Analyze sentiment for late turn
+                self._customer_history.append(frame.text)
+                if len(self._customer_history) > 5:
+                    self._customer_history = self._customer_history[-5:]
+                self._current_sentiment = analyze_sentiment(frame.text, self._customer_history[:-1])
+
                 text_frame = TextFrame(text=answer)
                 text_frame.metadata["node_name"] = node_name
                 text_frame.metadata["turn_index"] = current_state.values.get("turn_index", 0)
+                text_frame.metadata["customer_sentiment"] = self._current_sentiment
                 llm_ms = (time.perf_counter_ns() - t0) / 1_000_000
                 await self.push_frame(frame, direction)
                 await self.push_frame(text_frame, direction)
@@ -347,23 +369,31 @@ class LangGraphProcessor(FrameProcessor):
             return
 
         asr_text = frame.text
-        
+
         # Phase 2: Run compliance check (PII detection)
         try:
             from guardrail.compliance import check_compliance
             from guardrail.redact import redact_str
-            
+
             compliance_result = await check_compliance(
                 asr_text,
                 product=current_state.values.get("product", "personal_loan")
             )
-            
+
             if not compliance_result.get("compliant", True):
                 logger.warning(f"Compliance violation detected: {compliance_result.get('violations')}")
                 # Redact sensitive data from asr_text before processing
                 asr_text = redact_str(asr_text)
         except Exception as e:
             logger.debug(f"Compliance check failed (continuing): {e}")
+
+        # Phase 3: Analyze customer sentiment for adaptive prosody
+        self._customer_history.append(asr_text)
+        if len(self._customer_history) > 5:  # Keep last 5 utterances
+            self._customer_history = self._customer_history[-5:]
+
+        self._current_sentiment = analyze_sentiment(asr_text, self._customer_history[:-1])
+        logger.debug(f"Customer sentiment: {self._current_sentiment}")
 
         # Generate nudge from customer speech
         if self._db_session:
@@ -379,7 +409,8 @@ class LangGraphProcessor(FrameProcessor):
                     speaker="customer",
                 )
             except Exception as e:
-                logger.debug(f"Nudge generation failed (continuing): {e}")
+                # Changed from debug to warning - nudge failures should be visible
+                logger.warning(f"Nudge generation failed (continuing): {e}", exc_info=True)
 
         t0 = time.perf_counter_ns()
 
@@ -400,11 +431,36 @@ class LangGraphProcessor(FrameProcessor):
             # Pre-TTS compliance: scan agent output for PII before synthesis
             agent_text = await _check_agent_output(agent_text)
 
+            # Publish to supervisor monitor
+            await self._publish_transcript(agent_text, "agent")
+
             text_frame = TextFrame(text=agent_text)
             text_frame.metadata["node_name"] = generated_state.get("current_node", "unknown")
             text_frame.metadata["turn_index"] = generated_state.get("turn_index", 0)
+            text_frame.metadata["customer_sentiment"] = self._current_sentiment
             await self.push_frame(text_frame, direction)
             await self.push_frame(
                 LatencyFrame(hop="llm", duration_ms=generated_llm_ms),
                 direction,
             )
+
+    async def _publish_transcript(self, text: str, speaker: str) -> None:
+        """Publish transcript to Redis for supervisor monitoring."""
+        try:
+            if self._redis_client is None:
+                self._redis_client = await redis.from_url(self._redis_url)
+
+            message = json.dumps({
+                "type": "transcript",
+                "speaker": speaker,
+                "text": text,
+                "timestamp": time.time()
+            })
+
+            await self._redis_client.publish(
+                f"supervisor:{self._call_id}:transcript",
+                message
+            )
+        except Exception as e:
+            # Don't fail the call if Redis publish fails
+            logger.warning(f"Failed to publish transcript: {e}")

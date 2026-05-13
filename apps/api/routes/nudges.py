@@ -25,7 +25,7 @@ class NudgeTemplateCreate(BaseModel):
     suggestion: str
     priority: str = "medium"
     confidence_threshold: float = 0.7
-    metadata: dict[str, str] = {}
+    meta_info: dict[str, str] = {}
 
 
 class NudgeTemplateUpdate(BaseModel):
@@ -35,7 +35,7 @@ class NudgeTemplateUpdate(BaseModel):
     enabled: bool | None = None
     confidence_threshold: float | None = None
     trigger_keywords: list[str] | None = None
-    metadata: dict[str, str] | None = None
+    meta_info: dict[str, str] | None = None
 
 
 class NudgeCreate(BaseModel):
@@ -95,7 +95,7 @@ async def list_templates(
             "priority": t.priority,
             "enabled": t.enabled,
             "confidence_threshold": t.confidence_threshold,
-            "metadata": t.metadata,
+            "meta_info": t.meta_info,
             "created_at": t.created_at.isoformat(),
             "updated_at": t.updated_at.isoformat(),
         }
@@ -117,7 +117,7 @@ async def create_template(
         suggestion=data.suggestion,
         priority=data.priority,
         confidence_threshold=data.confidence_threshold,
-        metadata=data.metadata,
+        meta_info=data.meta_info,
     )
     session.add(template)
     await session.commit()
@@ -158,8 +158,8 @@ async def update_template(
         template.confidence_threshold = data.confidence_threshold
     if data.trigger_keywords is not None:
         template.trigger_keywords = data.trigger_keywords
-    if data.metadata is not None:
-        template.metadata = data.metadata
+    if data.meta_info is not None:
+        template.meta_info = data.meta_info
 
     template.updated_at = datetime.utcnow()
     session.add(template)

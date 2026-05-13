@@ -1,0 +1,126 @@
+{
+  "kb_name": "ABSLI Sherpa Trainer Product-wise Knowledge Base",
+  "compiled_on": "2026-05-09",
+  "recommended_structure": "Separate product-wise KBs + common golden-response KB + product routing KB",
+  "files": [
+    "00_common_life_insurance_golden_responses.md",
+    "00_product_benefits_matrix_preserved.md",
+    "00_product_routing_kb.md",
+    "01_absli_nishchit_aayush_plan_kb.md",
+    "02_absli_super_term_plan_kb.md",
+    "03_absli_salaried_term_plan_kb.md",
+    "04_absli_fortune_wealth_plan_kb.md",
+    "05_absli_platinum_gain_plan_kb.md",
+    "06_absli_vision_retirement_solution_kb.md",
+    "README.md"
+  ],
+  "products": [
+    {
+      "product_name": "ABSLI Nishchit Aayush Plan",
+      "category": "Savings Plans",
+      "plan_type": "Non-linked, non-participating individual savings life insurance plan",
+      "file": "01_absli_nishchit_aayush_plan_kb.md",
+      "source_primary": "https://lifeinsurance.adityabirlacapital.com/uploads/Nishchit_Aayush_Plan_V14_Brochure_9_2_26_4e4dcf4a43.pdf",
+      "source_note": "Official ABSLI Nishchit Aayush Plan brochure PDF, V14 web version.",
+      "retrieval_tags": [
+        "ABSLI",
+        "Sherpa Trainer",
+        "Savings Plans",
+        "ABSLI Nishchit Aayush Plan"
+      ]
+    },
+    {
+      "product_name": "ABSLI Super Term Plan",
+      "category": "Term Insurance",
+      "plan_type": "Non-linked, non-participating life individual pure risk premium plan",
+      "file": "02_absli_super_term_plan_kb.md",
+      "source_primary": "https://lifeinsurance.adityabirlacapital.com/uploads/ABSLI_Super_Term_Plan_V02_Brochure_Web_Version_ac63b34e77.pdf",
+      "source_note": "Official ABSLI Super Term Plan brochure PDF, V02 web version.",
+      "retrieval_tags": [
+        "ABSLI",
+        "Sherpa Trainer",
+        "Term Insurance",
+        "ABSLI Super Term Plan"
+      ]
+    },
+    {
+      "product_name": "ABSLI Salaried Term Plan",
+      "category": "Term Insurance",
+      "plan_type": "Non-linked, non-participating life individual pure risk premium plan for salaried professionals",
+      "file": "03_absli_salaried_term_plan_kb.md",
+      "source_primary": "https://lifeinsurance.adityabirlacapital.com/uploads/ABSLI_Salaried_Term_Plan_V05_Brochure_Web_Version_9743b6e5d7.pdf",
+      "source_note": "Official ABSLI Salaried Term Plan brochure PDF, V05 web version.",
+      "retrieval_tags": [
+        "ABSLI",
+        "Sherpa Trainer",
+        "Term Insurance",
+        "ABSLI Salaried Term Plan"
+      ]
+    },
+    {
+      "product_name": "ABSLI Fortune Wealth Plan",
+      "category": "ULIP Plans",
+      "plan_type": "Unit-linked, non-participating individual life insurance savings plan",
+      "file": "04_absli_fortune_wealth_plan_kb.md",
+      "source_primary": "https://lifeinsurance.adityabirlacapital.com/uploads/ABSLI_Fortune_Wealth_Plan_V01_Brochure_Web_Version_ead76f3e45.pdf",
+      "source_note": "Official ABSLI Fortune Wealth Plan brochure PDF, V01 web version.",
+      "retrieval_tags": [
+        "ABSLI",
+        "Sherpa Trainer",
+        "ULIP Plans",
+        "ABSLI Fortune Wealth Plan"
+      ]
+    },
+    {
+      "product_name": "ABSLI Platinum Gain Plan",
+      "category": "ULIP Plans",
+      "plan_type": "Unit-linked, non-participating individual life insurance savings plan",
+      "file": "05_absli_platinum_gain_plan_kb.md",
+      "source_primary": "https://lifeinsurance.adityabirlacapital.com/uploads/ABSLI_Platinum_Gain_Plan_V01_Brochure_Web_Version_e9471d7811.pdf",
+      "source_note": "Official ABSLI Platinum Gain Plan brochure PDF, V01 web version.",
+      "retrieval_tags": [
+        "ABSLI",
+        "Sherpa Trainer",
+        "ULIP Plans",
+        "ABSLI Platinum Gain Plan"
+      ]
+    },
+    {
+      "product_name": "ABSLI Vision Retirement Solution",
+      "category": "Retirement Solution",
+      "plan_type": "Combination retirement solution based on uploaded matrix: ABSLI Guaranteed Annuity Plus + ABSLI Wealth Infinia",
+      "file": "06_absli_vision_retirement_solution_kb.md",
+      "source_primary": "Uploaded product-benefit matrix only. No official brochure PDF URL was provided in the current input.",
+      "source_note": "Created from the uploaded product-benefit matrix only; validate against official product documents before regulated use.",
+      "retrieval_tags": [
+        "ABSLI",
+        "Sherpa Trainer",
+        "Retirement Solution",
+        "ABSLI Vision Retirement Solution"
+      ]
+    }
+  ],
+  "common_files": [
+    "00_common_life_insurance_golden_responses.md",
+    "00_product_benefits_matrix_preserved.md",
+    "00_product_routing_kb.md"
+  ],
+  "chunking_recommendation": {
+    "chunk_size_tokens": "800-1200",
+    "overlap_tokens": "100-150",
+    "split_on": [
+      "h2",
+      "h3",
+      "markdown tables"
+    ],
+    "metadata_fields": [
+      "product_name",
+      "category",
+      "plan_type",
+      "section",
+      "source_primary",
+      "rm_required",
+      "guardrail_type"
+    ]
+  }
+}

@@ -18,7 +18,7 @@ async def retrieve_context(
     product: str | None = None,
     top_k: int = 3,
     use_reranking: bool = True,
-    use_query_expansion: bool = True,
+    use_query_expansion: bool = False,  # Disabled - breaks Hindi/Urdu queries
 ) -> str:
     """Retrieve relevant context using advanced RAG techniques.
 
@@ -102,10 +102,11 @@ async def retrieve_context(
                     })
 
         if not all_results:
-            print("No results found from retrieval")
+            print(f"[RAG] No results found for query='{query}' product={product}")
             return ""
 
-        print(f"Retrieved {len(all_results)} candidates")
+        print(f"[RAG] Retrieved {len(all_results)} candidates for query='{query}' product={product}")
+        print(f"[RAG] Top result score: {all_results[0]['score']:.3f}")
 
         # Step 3: Reranking (if enabled)
         if use_reranking and len(all_results) > top_k:
@@ -125,7 +126,9 @@ async def retrieve_context(
 
         # Step 4: Extract and fuse context
         contexts = [r["text"] for r in all_results if r["text"]]
-        return "\n\n".join(contexts)
+        final_context = "\n\n".join(contexts)
+        print(f"[RAG] Returning {len(contexts)} chunks, total {len(final_context)} chars")
+        return final_context
 
     except Exception as e:
         print(f"Retrieval error: {e}")

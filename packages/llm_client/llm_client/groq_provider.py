@@ -52,6 +52,39 @@ class GroqProvider(BaseChatProvider):
         content = resp.choices[0].message.content
         return content or ""
 
+    async def ainvoke(self, prompt: str):
+        """Non-streaming chat completion.
+
+        Args:
+            prompt: Single user message or full prompt string
+
+        Returns:
+            Object with .content attribute containing response text
+        """
+        messages = [{"role": "user", "content": prompt}]
+        content = await self.chat(messages)
+        return type('Response', (), {'content': content})()
+
+    async def astream(self, prompt: str):
+        """Stream chat completion token by token.
+
+        Args:
+            prompt: Single user message or full prompt string
+
+        Yields:
+            Chunks with .content attribute containing token text
+        """
+        messages = [{"role": "user", "content": prompt}]
+        stream = await self._client.chat.completions.create(
+            model=self._model,
+            messages=messages,  # type: ignore[arg-type]
+            stream=True,
+        )
+        async for chunk in stream:
+            if chunk.choices[0].delta.content:
+                # Yield object with .content attribute to match expected interface
+                yield type('Chunk', (), {'content': chunk.choices[0].delta.content})()
+
     # ── JSON-mode structured call ──────────────────────────────────────────────
 
     async def json_mode(

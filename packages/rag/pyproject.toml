@@ -8,6 +8,11 @@ dependencies = [
     "pypdf>=4.0",
     "pydantic>=2.0",
     "python-dotenv>=1.0",
+    "faiss-cpu>=1.7.4",  # CPU-only FAISS for fast similarity search
+    "rank-bm25>=0.2.2",  # BM25 keyword search
+    "tqdm>=4.66",        # Progress bars
+    "numpy>=1.24",       # Array operations
+    "ragas>=0.1.0",      # RAG evaluation metrics
 ]
 
 [build-system]

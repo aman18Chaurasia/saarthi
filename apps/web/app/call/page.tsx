@@ -4,6 +4,7 @@ import { AudioCapture } from "@/lib/audio-capture";
 import { AudioPlayback } from "@/lib/audio-playback";
 import { useVoiceCall } from "@/lib/useVoiceCall";
 import { NudgePanel } from "@/components/NudgePanel";
+import { KBChatPanel } from "@/components/KBChatPanel";
 import { ArrowLeft, Globe, Phone, PhoneOff, Mic, MicOff, Volume2, Send, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -138,9 +139,11 @@ export default function CallPage() {
 	};
 
 	const handleSendContact = () => {
-		if (contactInput.trim()) {
-			voiceCall.sendText(contactInput.trim());
+		const text = contactInput.trim();
+		if (text) {
+			// Clear input immediately to prevent duplicates
 			setContactInput("");
+			voiceCall.sendText(text);
 		}
 	};
 
@@ -559,7 +562,12 @@ n							{/* Nudge Panel - Active Call */}
 											type="text"
 											value={contactInput}
 											onChange={(e) => setContactInput(e.target.value)}
-											onKeyPress={(e) => e.key === "Enter" && handleSendContact()}
+											onKeyPress={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													handleSendContact();
+												}
+											}}
 											placeholder="e.g. user@email.com or +919876543210"
 											className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
 										/>
@@ -669,6 +677,9 @@ n							{/* Nudge Panel - Active Call */}
 					</div>
 				)}
 			</main>
+
+			{/* KB Chat Panel - available always */}
+			<KBChatPanel callId={voiceCall.callId} />
 		</div>
 	);
 }
