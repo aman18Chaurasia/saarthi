@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docs
+docs/
+*.md
+!README.md
+
+# Local dev
+.env
+.env.local
+*.json
+!pyproject.json
+
+# Node (if web app copied)
+node_modules/
+apps/web/
+
+# Recordings and data
+recordings/
+evals/
+report/
+
+# Infra
+infra/
+docker-compose.yml
