@@ -679,7 +679,7 @@ n							{/* Nudge Panel - Active Call */}
 			</main>
 
 			{/* KB Chat Panel - available always */}
-			<KBChatPanel callId={voiceCall.callId} />
+			<KBChatPanel callId={undefined} />
 		</div>
 	);
 }
