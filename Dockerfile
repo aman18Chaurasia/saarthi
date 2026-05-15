@@ -30,4 +30,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Run with uvicorn - minimal version for hackathon demo
-CMD [".venv/bin/uvicorn", "apps.api.main_minimal:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD [".venv/bin/uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
