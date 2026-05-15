@@ -29,5 +29,5 @@ ENV PORT=8080
 # Expose port (Cloud Run uses PORT env var)
 EXPOSE 8080
 
-# Run with uvicorn
-CMD uv run uvicorn apps.api.main:app --host 0.0.0.0 --port ${PORT}
+# Run with uvicorn (activate venv first)
+CMD [".venv/bin/uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
