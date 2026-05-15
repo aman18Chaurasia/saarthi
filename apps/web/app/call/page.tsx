@@ -10,7 +10,7 @@ import { KBChatPanel } from "@/components/KBChatPanel";
 import { ArrowLeft, Globe, Phone, PhoneOff, Mic, MicOff, Volume2, Send, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 
 const PRODUCTS = {
 	home_loan: "Home Loan",
@@ -64,7 +64,7 @@ function formatLatencyMs(value: number | undefined) {
 	return `${value.toFixed(0)}ms`;
 }
 
-export default function CallPage() {
+function CallPageContent() {
 	const searchParams = useSearchParams();
 	const productParam = searchParams.get("product") || "personal_loan";
 	const product = (
@@ -683,5 +683,13 @@ n							{/* Nudge Panel - Active Call */}
 			{/* KB Chat Panel - available always */}
 			<KBChatPanel callId={undefined} />
 		</div>
+	);
+}
+
+export default function CallPage() {
+	return (
+		<Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+			<CallPageContent />
+		</Suspense>
 	);
 }
