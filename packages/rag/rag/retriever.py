@@ -40,7 +40,8 @@ async def retrieve_context(
         Concatenated context string from top-k chunks
     """
     qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
-    client = QdrantClient(url=qdrant_url)
+    qdrant_api_key = os.getenv("QDRANT_API_KEY")
+    client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
     collection_name = "saarthi_knowledge"
 
     # Build filter
