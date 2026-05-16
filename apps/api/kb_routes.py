@@ -1,37 +1,17 @@
 """Knowledge Base query endpoints for RAG chatbot."""
 from __future__ import annotations
 
-import asyncio
-from pathlib import Path
+import os
 from typing import AsyncIterator
 
-import numpy as np
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from llm_client import get_embed_provider, get_chat_provider
-from rag.faiss_hybrid import FAISSHybridRetriever
+from llm_client import get_chat_provider
+from rag.retriever import retrieve_context
 
 router = APIRouter(prefix="/api/kb", tags=["knowledge-base"])
-
-# Global retriever instance (loaded once at startup)
-_retriever: FAISSHybridRetriever | None = None
-_INDEX_DIR = Path("kb_indices")
-
-
-def get_retriever() -> FAISSHybridRetriever:
-    """Get or initialize the FAISS retriever."""
-    global _retriever
-    if _retriever is None:
-        if not _INDEX_DIR.exists():
-            raise HTTPException(
-                status_code=503,
-                detail=f"KB indices not found at {_INDEX_DIR}. Run build_indices first."
-            )
-        _retriever = FAISSHybridRetriever(index_path=_INDEX_DIR)
-        _retriever.load()
-    return _retriever
 
 
 class KBQueryRequest(BaseModel):
@@ -60,57 +40,42 @@ async def query_kb(request: KBQueryRequest):
         Streaming response with answer + sources
     """
     try:
-        retriever = get_retriever()
+        # Retrieve context using Qdrant-based RAG
+        context = await retrieve_context(
+            query=request.query,
+            product=None,  # Could extract from call_id
+            top_k=request.top_k,
+            use_reranking=True,
+        )
+
+        if not context:
+            raise HTTPException(
+                status_code=404,
+                detail="No relevant information found in knowledge base"
+            )
+
+        # Add live transcript if call_id provided
+        if request.call_id:
+            # TODO: Fetch live transcript from DB
+            context = f"[Live Call Context: {request.call_id}]\n\n{context}"
+
+        # Generate answer with LLM
+        if request.stream:
+            return StreamingResponse(
+                _stream_answer(request.query, context),
+                media_type="text/event-stream",
+            )
+        else:
+            answer = await _generate_answer(request.query, context)
+            return KBQueryResponse(
+                answer=answer,
+                sources=[],  # retrieve_context doesn't return individual chunks
+                confidence=0.8,  # Placeholder
+            )
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=503, detail=str(e))
-
-    # Generate query embedding
-    embed_provider = get_embed_provider()
-    embeddings = await embed_provider.embed([request.query])
-    query_embedding = np.array(embeddings[0], dtype=np.float32)  # First embedding
-
-    # Hybrid search
-    results = await asyncio.to_thread(
-        retriever.hybrid_search,
-        query_text=request.query,
-        query_embedding=query_embedding,
-        top_k=request.top_k,
-    )
-
-    # Build context from retrieved chunks
-    context_parts = []
-    for idx, result in enumerate(results, 1):
-        source_info = f"[{idx}] {result['metadata'].get('source', 'Unknown')}"
-        context_parts.append(f"{source_info}\n{result['text']}")
-
-    context = "\n\n---\n\n".join(context_parts)
-
-    # Add live transcript if call_id provided
-    if request.call_id:
-        # TODO: Fetch live transcript from DB
-        # For now, just note it in context
-        context = f"[Live Call Context: {request.call_id}]\n\n{context}"
-
-    # Generate answer with LLM
-    if request.stream:
-        return StreamingResponse(
-            _stream_answer(request.query, context, results),
-            media_type="text/event-stream",
-        )
-    else:
-        answer = await _generate_answer(request.query, context)
-        return KBQueryResponse(
-            answer=answer,
-            sources=[
-                {
-                    "text": r["text"][:200] + "...",
-                    "source": r["metadata"].get("source", "Unknown"),
-                    "score": r["score"],
-                }
-                for r in results
-            ],
-            confidence=results[0]["score"] if results else 0.0,
-        )
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
 async def _generate_answer(query: str, context: str) -> str:
@@ -133,11 +98,7 @@ Answer (be concise and accurate):"""
     return response.content
 
 
-async def _stream_answer(
-    query: str,
-    context: str,
-    sources: list[dict],
-) -> AsyncIterator[str]:
+async def _stream_answer(query: str, context: str) -> AsyncIterator[str]:
     """Stream answer token by token for fast first response."""
     chat_provider = get_chat_provider()
 
@@ -158,29 +119,28 @@ Answer (be concise and accurate):"""
         if hasattr(chunk, 'content') and chunk.content:
             yield f"data: {chunk.content}\n\n"
 
-    # Send sources at end
-    sources_json = [
-        {
-            "text": r["text"][:200] + "...",
-            "source": r["metadata"].get("source", "Unknown"),
-            "score": float(r["score"]),
-        }
-        for r in sources
-    ]
-
-    import json
-    yield f"data: [SOURCES]{json.dumps(sources_json)}\n\n"
     yield "data: [DONE]\n\n"
 
 
 @router.get("/health")
 async def health_check():
-    """Check if KB indices are loaded."""
+    """Check if Qdrant KB is accessible."""
     try:
-        retriever = get_retriever()
+        from qdrant_client import QdrantClient
+
+        qdrant_url = os.environ.get("QDRANT_URL")
+        qdrant_api_key = os.environ.get("QDRANT_API_KEY")
+
+        if not qdrant_url:
+            return {"status": "error", "detail": "QDRANT_URL not configured"}
+
+        client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+        info = client.get_collection("saarthi_knowledge")
+
         return {
             "status": "ok",
-            "num_documents": retriever.faiss_index.ntotal if retriever.faiss_index else 0,
+            "collection": "saarthi_knowledge",
+            "num_points": info.points_count,
         }
     except Exception as e:
         return {
